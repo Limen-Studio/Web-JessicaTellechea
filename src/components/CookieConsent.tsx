@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'preact/hooks';
 import type { Locale } from '../i18n/config';
 import { cookieConsentByLocale } from '../i18n/cookie-consent-strings';
 
-export const COOKIE_CONSENT_STORAGE_KEY = 'webaj_cookie_consent_v1';
+export const COOKIE_CONSENT_STORAGE_KEY = 'webjt_cookie_consent_v1';
 
 type ConsentDecision = 'accepted' | 'rejected' | 'configured';
 
