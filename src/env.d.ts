@@ -1,14 +1,14 @@
 /// <reference types="astro/client" />
 
 interface ImportMetaEnv {
-	readonly PUBLIC_CLINIC_ADDRESS?: string;
 	readonly PUBLIC_CLINIC_ADDRESS_BARCELONA?: string;
 	readonly PUBLIC_CLINIC_ADDRESS_EL_VENDRELL?: string;
 	readonly PUBLIC_CLINIC_PHONE?: string;
 	readonly PUBLIC_CLINIC_EMAIL?: string;
 	readonly PUBLIC_CLINIC_WEBSITE?: string;
 	readonly PUBLIC_CLINIC_INSTAGRAM?: string;
-	readonly PUBLIC_GOOGLE_MAPS_URL?: string;
+	readonly PUBLIC_GOOGLE_MAPS_URL_BARCELONA?: string;
+	readonly PUBLIC_GOOGLE_MAPS_URL_EL_VENDRELL?: string;
 	readonly PUBLIC_STUDIO_URL?: string;
 	readonly PUBLIC_WHATSAPP_E164?: string;
 	readonly PUBLIC_FORM_POST_URL?: string;

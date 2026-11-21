@@ -671,6 +671,24 @@
 	word-break: break-word;
 }
 
+/** Ubicación del resumen: enlace a Google Maps, subrayado fino en dorado. */
+.booking-flow__summary-link {
+	color: inherit;
+	text-decoration: underline;
+	text-decoration-color: var(--color-champagne);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.22em;
+}
+
+.booking-flow__summary-link:hover {
+	color: var(--color-accent);
+}
+
+.booking-flow__summary-link:focus-visible {
+	outline: 2px solid var(--color-champagne);
+	outline-offset: 2px;
+}
+
 .booking-flow__summary-value em {
 	display: inline-block;
 	margin-top: 0.2rem;

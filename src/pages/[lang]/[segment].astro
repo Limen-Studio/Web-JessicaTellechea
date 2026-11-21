@@ -15,7 +15,7 @@ import { trustPageContent } from '../../i18n/trust-page';
 import { resolveBookingCta } from '../../i18n/booking-links';
 import { bookingPublic } from '../../i18n/site-features';
 import BookingFlow from '../../features/booking-nubimed/BookingFlow';
-import { centroAddressesFromEnv } from '../../features/booking-nubimed/config';
+import { clinicLocationsFromEnv } from '../../i18n/clinic-locations';
 import { href, iaKeyFromPath, type IaKey, segmentFor, stubRecordKeyFromIaKey } from '../../i18n/route-registry';
 
 export function getStaticPaths() {
@@ -109,7 +109,7 @@ if (iaKey === 'contact') {
 				{iaKey !== 'facial' && iaKey !== 'corporal' && iaKey !== 'capilar' && iaKey !== 'trust' ? <h1 class:list={[bookingBlock && 'booking-page__title']}>{heading}</h1> : null}
 				{iaKey !== 'facial' && iaKey !== 'corporal' && iaKey !== 'capilar' && iaKey !== 'trust' ? <p class:list={[bookingBlock && 'booking-page__lead']}>{lead}</p> : null}
 				{bookingBlock && bookingPublic ? (
-					<BookingFlow client:load lang={lang} centroAddresses={centroAddressesFromEnv()} />
+					<BookingFlow client:load lang={lang} centroLocations={clinicLocationsFromEnv()} />
 				) : null}
 				{bookingBlock && !bookingPublic ? (
 					<div class="booking-placeholder" data-booking-placeholder>

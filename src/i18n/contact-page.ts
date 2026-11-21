@@ -26,14 +26,16 @@ interface ContactPageContent {
 	};
 	contactDetails: {
 		h2: string;
-		addressLabel: string;
-		addressFallback: string;
+		/** Rótulo del bloque de centros (Barcelona / El Vendrell). */
+		locationsLabel: string;
 		phoneLabel: string;
 		phoneFallback: string;
 		emailLabel: string;
 		emailFallback: string;
-		mapLabel: string;
-		mapText: string;
+		/** Texto del mosaico de mapa de cada centro. */
+		mapCta: string;
+		/** aria-label del enlace a Maps; `{clinic}` se reemplaza por el nombre del centro. */
+		mapAriaLabel: string;
 	};
 	trust: {
 		quote: string;
@@ -71,14 +73,13 @@ export const contactPageContent: Record<Locale, ContactPageContent> = {
 		},
 		contactDetails: {
 			h2: 'Detalles de Contacto',
-			addressLabel: 'Dirección',
-			addressFallback: 'Paseo de Gracia, 12\n08007 Barcelona, España',
+			locationsLabel: 'Centros',
 			phoneLabel: 'Teléfono',
 			phoneFallback: '+34 932 456 789',
 			emailLabel: 'Email',
 			emailFallback: 'info@dratellechea.com',
-			mapLabel: 'Vendrell, Centro',
-			mapText: 'Vendrell, Centro',
+			mapCta: 'Cómo llegar',
+			mapAriaLabel: 'Abrir {clinic} en Google Maps (pestaña nueva)',
 		},
 		trust: {
 			quote: '"La medicina estética no debe gritar, sino susurrar la mejor versión de uno mismo."',
@@ -114,14 +115,13 @@ export const contactPageContent: Record<Locale, ContactPageContent> = {
 		},
 		contactDetails: {
 			h2: 'Contact Details',
-			addressLabel: 'Address',
-			addressFallback: 'Paseo de Gracia, 12\n08007 Barcelona, Spain',
+			locationsLabel: 'Clinics',
 			phoneLabel: 'Phone',
 			phoneFallback: '+34 932 456 789',
 			emailLabel: 'Email',
 			emailFallback: 'info@dratellechea.com',
-			mapLabel: 'Vendrell, Centre',
-			mapText: 'Vendrell, Centre',
+			mapCta: 'Get directions',
+			mapAriaLabel: 'Open {clinic} in Google Maps (new tab)',
 		},
 		trust: {
 			quote: '"Aesthetic medicine should not shout, but whisper the best version of oneself."',
@@ -157,14 +157,13 @@ export const contactPageContent: Record<Locale, ContactPageContent> = {
 		},
 		contactDetails: {
 			h2: 'Detalls de Contacte',
-			addressLabel: 'Adreça',
-			addressFallback: 'Paseo de Gracia, 12\n08007 Barcelona, Espanya',
+			locationsLabel: 'Centres',
 			phoneLabel: 'Telèfon',
 			phoneFallback: '+34 932 456 789',
 			emailLabel: 'Email',
 			emailFallback: 'info@dratellechea.com',
-			mapLabel: 'Vendrell, Centre',
-			mapText: 'Vendrell, Centre',
+			mapCta: 'Com arribar',
+			mapAriaLabel: 'Obrir {clinic} a Google Maps (pestanya nova)',
 		},
 		trust: {
 			quote: '"La medicina estètica no ha de cridar, sinó xiuxiuejar la millor versió d’un mateix."',
@@ -200,14 +199,13 @@ export const contactPageContent: Record<Locale, ContactPageContent> = {
 		},
 		contactDetails: {
 			h2: 'Coordonnées',
-			addressLabel: 'Adresse',
-			addressFallback: 'Paseo de Gracia, 12\n08007 Barcelone, Espagne',
+			locationsLabel: 'Centres',
 			phoneLabel: 'Téléphone',
 			phoneFallback: '+34 932 456 789',
 			emailLabel: 'Email',
 			emailFallback: 'info@dratellechea.com',
-			mapLabel: 'Vendrell, Centre',
-			mapText: 'Vendrell, Centre',
+			mapCta: 'Itinéraire',
+			mapAriaLabel: 'Ouvrir {clinic} dans Google Maps (nouvel onglet)',
 		},
 		trust: {
 			quote:
