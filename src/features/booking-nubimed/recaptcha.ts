@@ -23,6 +23,9 @@ function loadRecaptchaScript(siteKey: string): Promise<void> {
 	});
 }
 
+/** `action` de reCAPTCHA v3 que usa el portal Nubimed (verificado en vivo, clínica 1212, 2026-11-21). */
+export const NUBIMED_RECAPTCHA_ACTION = 'cita_peticion';
+
 /**
  * reCAPTCHA v3 token for Nubimed (site key comes from /new HTML).
  * El dominio actual debe estar autorizado en la clave del portal o la peticion fallara.
@@ -40,11 +43,9 @@ export async function executeRecaptchaForBooking(siteKey: string): Promise<strin
 		if (typeof g.execute !== 'function') {
 			throw new BookingFlowError('parse', 'API reCAPTCHA no disponible');
 		}
-		try {
-			return await g.execute(siteKey, { action: 'cita_peticiones' });
-		} catch {
-			return await g.execute(siteKey, { action: 'submit' });
-		}
+		// Mismo `action` que el widget oficial del portal (`cita_peticiones-*.js`):
+		// Nubimed valida que coincida; cualquier otro valor da "Recaptcha Validation Error".
+		return await g.execute(siteKey, { action: NUBIMED_RECAPTCHA_ACTION });
 	};
 	return new Promise((resolve, reject) => {
 		const start = () => {
