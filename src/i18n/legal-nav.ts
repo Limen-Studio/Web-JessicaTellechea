@@ -26,10 +26,10 @@ export function legalFooterPublicationNote(lang: Locale): string {
 /** Crédito de estudio — tipografía discreta en el pie. */
 export function footerStudioCredit(lang: Locale): { lead: string; name: string } {
 	const map: Record<Locale, { lead: string; name: string }> = {
-		es: { lead: 'Diseñado y desarrollado por ', name: 'Umbral' },
-		en: { lead: 'Designed and developed by ', name: 'Umbral' },
-		ca: { lead: 'Dissenyat i desenvolupat per ', name: 'Umbral' },
-		fr: { lead: 'Conçu et développé par ', name: 'Umbral' },
+		es: { lead: 'Diseñado y desarrollado por ', name: 'Limen Studio' },
+		en: { lead: 'Designed and developed by ', name: 'Limen Studio' },
+		ca: { lead: 'Dissenyat i desenvolupat per ', name: 'Limen Studio' },
+		fr: { lead: 'Conçu et développé par ', name: 'Limen Studio' },
 	};
 	return map[lang];
 }

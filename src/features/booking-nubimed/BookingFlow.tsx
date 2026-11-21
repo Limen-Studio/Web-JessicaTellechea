@@ -170,7 +170,7 @@ export default function BookingFlow({
 	lang,
 	presetSpecialtySlug,
 	presetTreatmentId,
-	centroAddresses,
+	centroLocations,
 }: BookingFlowProps) {
 	const strings = t(lang);
 	const prefixOptions = useMemo(() => phonePrefixSelectOptions(lang), [lang]);
@@ -907,7 +907,8 @@ export default function BookingFlow({
 				: pickStep === 'treatment'
 					? 3
 					: 4;
-	const centroAddress = centro ? centroAddresses?.[centro.centro]?.trim() : undefined;
+	const centroLocation = centro ? centroLocations?.[centro.centro] : undefined;
+	const centroAddressText = centroLocation ? centroLocation.address.replace(/\n/g, ', ') : '';
 	const stepLabel = (step: number) => `${strings.stepLabelPrefix} ${String(step).padStart(2, '0')}`;
 
 	return (
@@ -1387,10 +1388,20 @@ export default function BookingFlow({
 									<strong class="booking-flow__summary-label">{strings.timeLabel}:</strong>
 									<span class="booking-flow__summary-value">{summaryTimeLabel(selectedSlot)}</span>
 								</p>
-								{centroAddress ? (
+								{centroLocation ? (
 									<p class="booking-flow__summary-row">
 										<strong class="booking-flow__summary-label">{strings.locationLabel}:</strong>
-										<span class="booking-flow__summary-value">{centroAddress}</span>
+										<span class="booking-flow__summary-value">
+											<a
+												class="booking-flow__summary-link"
+												href={centroLocation.mapsHref}
+												target="_blank"
+												rel="noopener noreferrer"
+												aria-label={`${centroAddressText} — ${strings.openInMaps}`}
+											>
+												{centroAddressText}
+											</a>
+										</span>
 									</p>
 								) : null}
 							</div>

@@ -26,6 +26,8 @@ type BookingStrings = {
 	selectArea: string;
 	areaLabel: string;
 	stepsAriaLabel: string;
+	/** Sufijo accesible del enlace de ubicación (se abre Google Maps en otra pestaña). */
+	openInMaps: string;
 	selectDay: string;
 	selectSlot: string;
 	selectProfessional: string;
@@ -109,6 +111,7 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		selectArea: 'Centro',
 		areaLabel: 'Centro',
 		stepsAriaLabel: 'Pasos de la reserva',
+		openInMaps: 'abrir en Google Maps (pestaña nueva)',
 		selectDay: 'Elige Día',
 		selectSlot: 'Elige Hora',
 		selectProfessional: 'Profesional',
@@ -195,6 +198,7 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		selectArea: 'Centre',
 		areaLabel: 'Centre',
 		stepsAriaLabel: 'Booking steps',
+		openInMaps: 'open in Google Maps (new tab)',
 		selectDay: 'Choose day',
 		selectSlot: 'Choose time',
 		selectProfessional: 'Professional',
@@ -281,6 +285,7 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		selectArea: 'Centre',
 		areaLabel: 'Centre',
 		stepsAriaLabel: 'Passos de la reserva',
+		openInMaps: 'obrir a Google Maps (pestanya nova)',
 		selectDay: 'Tria dia',
 		selectSlot: 'Tria hora',
 		selectProfessional: 'Professional',
@@ -367,6 +372,7 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		selectArea: 'Centre',
 		areaLabel: 'Centre',
 		stepsAriaLabel: 'Étapes de la réservation',
+		openInMaps: 'ouvrir dans Google Maps (nouvel onglet)',
 		selectDay: 'Choisissez le jour',
 		selectSlot: 'Choisissez l’heure',
 		selectProfessional: 'Praticien',

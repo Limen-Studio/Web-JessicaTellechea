@@ -3,6 +3,7 @@ import type { Locale } from '../../i18n/config';
 import { contactFormUsesFormSubmitFallback, resolveContactFormPostUrl } from '../../i18n/form-endpoints';
 import { href } from '../../i18n/route-registry';
 import { contactPageContent } from '../../i18n/contact-page';
+import { CLINIC_LOCATION_KEYS, CLINIC_LOCATION_LABELS, clinicLocationsFromEnv } from '../../i18n/clinic-locations';
 import Heading from '../ui/Heading.astro';
 
 interface Props {
@@ -11,11 +12,19 @@ interface Props {
 
 const { lang } = Astro.props;
 const c = contactPageContent[lang];
-const clinicAddress = import.meta.env.PUBLIC_CLINIC_ADDRESS?.trim() || c.contactDetails.addressFallback;
 const clinicPhone = import.meta.env.PUBLIC_CLINIC_PHONE?.trim() || c.contactDetails.phoneFallback;
 const clinicEmail = import.meta.env.PUBLIC_CLINIC_EMAIL?.trim() || c.contactDetails.emailFallback;
-const googleMapsUrl = import.meta.env.PUBLIC_GOOGLE_MAPS_URL?.trim();
-const addressLines = clinicAddress.split('\n');
+const locationsByKey = clinicLocationsFromEnv();
+const clinics = CLINIC_LOCATION_KEYS.map((key) => {
+	const name = CLINIC_LOCATION_LABELS[key][lang];
+	return {
+		key,
+		name,
+		addressLines: locationsByKey[key].address.split('\n'),
+		mapsHref: locationsByKey[key].mapsHref,
+		mapAria: c.contactDetails.mapAriaLabel.replace('{clinic}', name),
+	};
+});
 const formAction = resolveContactFormPostUrl(clinicEmail);
 const formSubmitFallback = contactFormUsesFormSubmitFallback(clinicEmail);
 const formSubject = `[Dra. Jessica Tellechea] ${c.form.submit} (${lang})`;
@@ -23,8 +32,6 @@ const siteOrigin = Astro.site ? new URL(Astro.site).origin : Astro.url.origin;
 const formNextUrl = `${siteOrigin}${href(lang, 'contact')}?sent=1`;
 const phoneHref = `tel:${clinicPhone.replace(/[^\d+]/g, '')}`;
 const emailHref = `mailto:${clinicEmail}`;
-const mapHref =
-	googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(clinicAddress)}`;
 ---
 
 <article class="contact-page">
@@ -138,10 +145,17 @@ const mapHref =
 						<div class="contact-detail">
 							<i class="ph-thin ph-map-pin contact-detail__icon" aria-hidden="true"></i>
 							<div>
-								<p class="contact-detail__label">{c.contactDetails.addressLabel}</p>
-								<p class="contact-detail__value">
-									{addressLines.map((line) => <span>{line}</span>)}
-								</p>
+								<p class="contact-detail__label">{c.contactDetails.locationsLabel}</p>
+								<div class="contact-locations">
+									{clinics.map((clinic) => (
+										<p class="contact-detail__value contact-location">
+											<strong class="contact-location__name">{clinic.name}</strong>
+											{clinic.addressLines.map((line) => (
+												<span>{line}</span>
+											))}
+										</p>
+									))}
+								</div>
 							</div>
 						</div>
 						<div class="contact-detail">
@@ -165,18 +179,23 @@ const mapHref =
 					</div>
 				</div>
 
-				<a
-					class="contact-map"
-					href={mapHref}
-					target="_blank"
-					rel="noreferrer"
-					aria-label={c.contactDetails.mapLabel}
-				>
-					<span class="contact-map__veil" aria-hidden="true">
-						<i class="ph-thin ph-map-trifold contact-map__icon"></i>
-						<span class="contact-map__text">{c.contactDetails.mapText}</span>
-					</span>
-				</a>
+				<div class="contact-maps">
+					{clinics.map((clinic) => (
+						<a
+							class="contact-map"
+							href={clinic.mapsHref}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={clinic.mapAria}
+						>
+							<span class="contact-map__veil" aria-hidden="true">
+								<i class="ph-thin ph-map-trifold contact-map__icon"></i>
+								<span class="contact-map__text">{clinic.name}</span>
+								<span class="contact-map__cta">{c.contactDetails.mapCta}</span>
+							</span>
+						</a>
+					))}
+				</div>
 			</aside>
 		</div>
 	</section>

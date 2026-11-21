@@ -1,15 +1,13 @@
 import type { SiteLocale } from './types';
+import { CLINIC_LOCATION_LABELS, type ClinicLocationKey } from '../../i18n/clinic-locations';
 
-export type CentroKey = 'barcelona' | 'el-vendrell';
+/** Centros = ubicaciones de la clínica (`src/i18n/clinic-locations.ts`). */
+export type CentroKey = ClinicLocationKey;
 
 /** Centros (areas Nubimed) de la clinica 1212; etiquetas compartidas entre especialidades. */
 export const CENTROS: Record<CentroKey, { readonly labels: Record<SiteLocale, string> }> = {
-	barcelona: {
-		labels: { es: 'Barcelona', en: 'Barcelona', ca: 'Barcelona', fr: 'Barcelone' },
-	},
-	'el-vendrell': {
-		labels: { es: 'El Vendrell', en: 'El Vendrell', ca: 'El Vendrell', fr: 'El Vendrell' },
-	},
+	barcelona: { labels: CLINIC_LOCATION_LABELS.barcelona },
+	'el-vendrell': { labels: CLINIC_LOCATION_LABELS['el-vendrell'] },
 };
 
 export interface SpecialtyCentro {
@@ -134,16 +132,6 @@ export function centroFor(entry: SpecialtyCatalogEntry, key: string): SpecialtyC
 	const k = key.trim().toLowerCase();
 	if (!k) return undefined;
 	return entry.centros.find((c) => c.centro === k);
-}
-
-/** Direcciones por centro desde env (accesos literales para que Vite los reemplace). */
-export function centroAddressesFromEnv(): Partial<Record<CentroKey, string>> {
-	const out: Partial<Record<CentroKey, string>> = {};
-	const barcelona = import.meta.env.PUBLIC_CLINIC_ADDRESS_BARCELONA?.trim();
-	const elVendrell = import.meta.env.PUBLIC_CLINIC_ADDRESS_EL_VENDRELL?.trim();
-	if (barcelona) out.barcelona = barcelona;
-	if (elVendrell) out['el-vendrell'] = elVendrell;
-	return out;
 }
 
 /** Numeric dial codes without +; ISO region for Intl.DisplayNames. */
