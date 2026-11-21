@@ -1,4 +1,5 @@
 import type { Locale } from '../../i18n/config';
+import type { CentroKey } from './config';
 
 /** Site locale (same as routing); vendor `locale` maps 1:1 per design. */
 export type SiteLocale = Locale;
@@ -9,8 +10,8 @@ export interface BookingFlowProps {
 	presetSpecialtySlug?: string | null;
 	/** Optional query preset for future treatment preload (id or key). */
 	presetTreatmentId?: string | null;
-	/** Dirección textual de la clínica (build-time; preferible pasarla desde Astro para la isla). */
-	clinicAddress?: string | null;
+	/** Direcciones por centro (build-time; se pasan desde Astro para la isla). */
+	centroAddresses?: Partial<Record<CentroKey, string>>;
 }
 
 export interface BootstrapSession {
@@ -43,9 +44,4 @@ export class BookingFlowError extends Error {
 		this.name = 'BookingFlowError';
 		this.kind = kind;
 	}
-}
-
-export interface SpecialtySelection {
-	vendorId: number;
-	clinicaTratamientoId?: number;
 }

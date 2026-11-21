@@ -1,7 +1,7 @@
 ---
 import type { Locale } from '../../i18n/config';
 import type { CapilarPageContent } from '../../i18n/capilar-page';
-import { resolveBookingCta } from '../../i18n/booking-links';
+import { BOOKING_PRESET_VENDOR_TRICOLOGIA, resolveBookingCta } from '../../i18n/booking-links';
 import { PILLAR_TREATMENTS_SECTION_ID, pillarJumpSectionIds } from '../../i18n/pillar-navigation';
 import { href, hrefCapilarTreatment } from '../../i18n/route-registry';
 import FinalCta from '../FinalCta.astro';
@@ -14,7 +14,7 @@ interface Props {
 }
 
 const { lang, content } = Astro.props;
-const bookingCta = resolveBookingCta(lang);
+const bookingCta = resolveBookingCta(lang, { preset: BOOKING_PRESET_VENDOR_TRICOLOGIA });
 ---
 
 <article class="capilar-page">

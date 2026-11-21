@@ -2,7 +2,7 @@
 
 This repository holds **durable product and IA documentation** for the Dra. Jessica Tellechea public website, and hosts the **implementation** of the site as an **Astro + TypeScript** project (content and UI maintained from code, with optional interactive islands—for example React—where needed).
 
-Deployment target is **IONOS Hosting Plus** (shared hosting): **static** Astro build output (`dist/`); see `docs/stack-and-deployment-context.md`.
+Deployment target is **Cloudflare Pages** (git deploy): **static** Astro build output (`dist/`) plus one Pages Function (the Nubimed booking proxy in `functions/`); see `docs/stack-and-deployment-context.md`.
 
 Agent-assisted workflows (Cursor, Claude Code, etc.) are expected for implementation. **Coding-agent conventions:** see [AGENTS.md](AGENTS.md).
 
@@ -17,7 +17,7 @@ Agent-assisted workflows (Cursor, Claude Code, etc.) are expected for implementa
 
 - Public-facing practice website context and documentation.
 - Site goals, structure, messaging, conversion model, SEO/localization direction.
-- Technical stack context: **Astro, TypeScript, IONOS deployment constraints** (`docs/stack-and-deployment-context.md`).
+- Technical stack context: **Astro, TypeScript, Cloudflare Pages deployment** (`docs/stack-and-deployment-context.md`).
 
 ## Out of scope (for the documentation track)
 
@@ -32,7 +32,7 @@ Implementation (Astro app, UI, content in repo) is **in scope** for the reposito
 - `docs/site-architecture.md` — sitemap, page responsibilities, navigation rules, conversion routing, naming normalization.
 - `docs/content-and-messaging.md` — positioning, tone, copy rules, service framing, CTA behavior.
 - `docs/seo-and-localization.md` — local SEO baseline, multilingual architecture assumptions, URL/meta guidance.
-- `docs/stack-and-deployment-context.md` — Astro + TypeScript direction, IONOS hosting, content-in-repo, forms and multilingual implications.
+- `docs/stack-and-deployment-context.md` — Astro + TypeScript direction, Cloudflare Pages hosting, content-in-repo, forms and multilingual implications.
 - `docs/reference/source-materials.md` — source inventory, trust hierarchy, interpretation notes, inherited conflicts.
 
 ## Where to start
@@ -121,7 +121,14 @@ Opcional: `--debug ruta/blend-debug.jpg` (mezcla 50/50); `--y-bottom-pct 46`; `-
 - **`/`** uses `Astro.redirect` in dev; **static build** emits an HTML redirect (`meta refresh` + link) to `/es/`. For production, you MAY replace this with a host-level 302 rule.
 - Set **`SITE_URL`** in a local `.env` (see `.env.example`); `astro.config.mjs` reads it via Vite `loadEnv` for Astro `site` (canonical and `hreflang`). If unset, a placeholder is used for local builds.
 - **`/robots.txt`** is emitted at build from `src/pages/robots.txt.ts` (booking `Disallow` lines follow `src/i18n/route-registry.ts`; `Sitemap` uses the same origin as `site`).
-- Public practice/contact values (`PUBLIC_CLINIC_ADDRESS`, `PUBLIC_CLINIC_PHONE`, `PUBLIC_CLINIC_EMAIL`, `PUBLIC_CLINIC_INSTAGRAM`, `PUBLIC_GOOGLE_MAPS_URL` — env var names retained as technical identifiers) and conversion values (`PUBLIC_NUBIMED_VENDOR_ORIGIN`, `PUBLIC_FORM_POST_URL`, `PUBLIC_WHATSAPP_E164`) live in `.env.example`; values are baked into the static build at build time where used. Use `PUBLIC_CLINIC_PHONE` for visible phone text and `PUBLIC_WHATSAPP_E164` only for `wa.me` links.
+- Public practice/contact values (`PUBLIC_CLINIC_ADDRESS`, `PUBLIC_CLINIC_PHONE`, `PUBLIC_CLINIC_EMAIL`, `PUBLIC_CLINIC_INSTAGRAM`, `PUBLIC_GOOGLE_MAPS_URL` — env var names retained as technical identifiers) and conversion values (`PUBLIC_NUBIMED_CLINICA_ID`, `PUBLIC_NUBIMED_VENDOR_ORIGIN`, `PUBLIC_FORM_POST_URL`, `PUBLIC_WHATSAPP_E164`) live in `.env.example`; values are baked into the static build at build time where used. Use `PUBLIC_CLINIC_PHONE` for visible phone text and `PUBLIC_WHATSAPP_E164` only for `wa.me` links.
+
+### Deploy (Cloudflare Pages) and local Function test
+
+- Connect the repo to Cloudflare Pages: build command `npm run build`, output directory `dist`. `functions/` is deployed automatically.
+- Set every `PUBLIC_*` used at build (including `PUBLIC_CLINIC_ADDRESS_BARCELONA` and `PUBLIC_CLINIC_ADDRESS_EL_VENDRELL`) in the Cloudflare **build** env, and `PUBLIC_NUBIMED_CLINICA_ID` (required) / `PUBLIC_NUBIMED_VENDOR_ORIGIN` (optional) as Function **runtime** variables in the dashboard.
+- Local test of the proxy: `npm run build`, then `npx wrangler pages dev dist --binding PUBLIC_NUBIMED_CLINICA_ID=1212`.
+- Booking is gated by `bookingPublic` in `src/i18n/site-features.ts`.
 
 Official docs: [https://docs.astro.build](https://docs.astro.build) · Community: [https://astro.build/chat](https://astro.build/chat).
 

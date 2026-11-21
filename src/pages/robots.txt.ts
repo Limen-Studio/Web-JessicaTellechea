@@ -18,6 +18,7 @@ export const GET: APIRoute = ({ site }) => {
 		const seg = segmentFor(locale, 'booking');
 		lines.push(`Disallow: /${locale}/${seg}/`);
 	}
+	lines.push('Disallow: /__nubimed-proxy/');
 	lines.push('');
 	lines.push(`Sitemap: ${origin}/sitemap-index.xml`);
 	const body = `${lines.join('\n')}\n`;

@@ -3,6 +3,8 @@ import type { BootstrapSession } from './types';
 /** Query for GET .../cita_peticiones/new (Nubimed portal, widget handoff). */
 export interface NewUrlSelection {
 	readonly specialtyVendorId: number;
+	/** Centro (area Nubimed). */
+	readonly areaId: number;
 	readonly prefTratamientoId: number;
 	/** Full ISO instant (same as huecos_agenda slot). */
 	readonly prefHoraIso: string;
@@ -21,15 +23,15 @@ export function buildNewUrl(
 ): string {
 	const b = baseUrl.replace(/\/$/, '');
 	const path = bootstrap.newEntryPath.startsWith('/') ? bootstrap.newEntryPath : `/${bootstrap.newEntryPath}`;
-	/** No usar `new URL(path absoluto, base)` con base que lleva prefijo (p. ej. `/__nubimed-proxy`): el path absoluto borra el prefijo y la peticion iria al origen sin proxy. */
-	const u = new URL(`${b}${path}`);
+	/** No usar `new URL(path absoluto, base)` con base que lleva prefijo (p. ej. `/__nubimed-proxy`): el path absoluto borra el prefijo y la peticion iria al origen sin proxy. La base puede ser relativa: se resuelve contra el origen actual. */
+	const u = new URL(`${b}${path}`, globalThis.location?.origin ?? 'http://localhost');
 	u.searchParams.set('origen', 'widget');
 	u.searchParams.set('pref_hora', sel.prefHoraIso);
 	if (sel.professionalId != null) {
 		u.searchParams.set('pref_users_dispo', String(sel.professionalId));
 	}
 	u.searchParams.set('especialidad', String(sel.specialtyVendorId));
-	u.searchParams.set('area', 'undefined');
+	u.searchParams.set('area', String(sel.areaId));
 	u.searchParams.set('pref_tratamiento', String(sel.prefTratamientoId));
 	u.searchParams.set('agenda', 'undefined');
 	u.searchParams.set('mutua', 'undefined');
@@ -46,7 +48,7 @@ export function buildTrackingInnerQuery(sel: NewUrlSelection): string {
 		parts.push(`pref_users_dispo=${String(sel.professionalId)}`);
 	}
 	parts.push(`especialidad=${String(sel.specialtyVendorId)}`);
-	parts.push('area=undefined');
+	parts.push(`area=${String(sel.areaId)}`);
 	parts.push(`pref_tratamiento=${String(sel.prefTratamientoId)}`);
 	parts.push('agenda=undefined');
 	parts.push('mutua=undefined');

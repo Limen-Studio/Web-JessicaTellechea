@@ -8,6 +8,7 @@ import HomeHero from '../../components/home/HomeHero.astro';
 import HomeManifest from '../../components/home/HomeManifest.astro';
 import HomeMedicalProcess from '../../components/home/HomeMedicalProcess.astro';
 import HomeTreatmentAreas from '../../components/home/HomeTreatmentAreas.astro';
+import WhatsAppFloat from '../../components/WhatsAppFloat.astro';
 import { locales, type Locale } from '../../i18n/config';
 import { homeContent } from '../../i18n/home-content';
 
@@ -30,4 +31,5 @@ const description = `${hero.subtitle} ${hero.supporting}`;
 	<HomeClinicExperience lang={lang} />
 	<HomeDarkAuthority lang={lang} />
 	<HomeFinalCta lang={lang} />
+	<WhatsAppFloat lang={lang} />
 </BaseLayout>

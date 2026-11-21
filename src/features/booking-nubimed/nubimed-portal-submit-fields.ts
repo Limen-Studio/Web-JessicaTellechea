@@ -14,10 +14,9 @@ export const NUBIMED_SUBMIT_EXCLUDED_INPUT_NAMES: readonly string[] = ['next', '
  */
 export const NUBIMED_PORTAL_SUBMIT_FIXED_FIELDS: Readonly<Record<string, string>> = {
 	maximo_dias: '91',
-	clinica_tratamiento_obligatorio: 'false',
+	clinica_tratamiento_obligatorio: 'true',
 	hay_tratamientos: 'true',
-	hay_areas: 'false',
-	area_seleccionada: '',
+	hay_areas: 'true',
 	mutua_seleccionada: '',
 	hay_mutuas: 'false',
 	pmc: '',

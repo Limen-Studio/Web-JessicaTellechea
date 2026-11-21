@@ -33,7 +33,7 @@ You are an implementer on the public practice site of Dra. Jessica Tellechea. Pr
 
 - Canonical slugs, primary nav items, or new IA intents.
 - New locales, new public routes, or indexability of booking.
-- Stack or hosting changes (WordPress, SSR, Node on IONOS).
+- Stack or hosting changes (WordPress, SSR, Astro adapters, new Cloudflare Functions or any other server code).
 - Legal/medical claims, prices, or practice identity data that are not already in `.env` / copy files.
 - Git commit, push, or pull request (only if the human requested it).
 
@@ -42,7 +42,8 @@ You are an implementer on the public practice site of Dra. Jessica Tellechea. Pr
 - Commit secrets or put credentials in the repo. Local `.env` only.
 - Paste large PDF dossier text into markdown or source.
 - Restore WordPress / Elementor as the primary platform.
-- Add a Node/SSR runtime for IONOS Hosting Plus. Build target is static `dist/`.
+- Add SSR, an Astro adapter, or a general-purpose backend. Build target is static `dist/`; the only sanctioned server code is the Nubimed proxy Function (see [Stack](#stack)).
+- Log request or response bodies in the proxy Function (they carry patient data).
 - Change booking from `noindex` without a docs + product decision.
 
 ## Scope: direct vs OpenSpec
@@ -74,7 +75,7 @@ Before **UI, routes, or copy**:
 
 1. `docs/site-architecture.md` — URLs, nav, conversion, booking visibility.
 2. `docs/seo-and-localization.md` — locales, hreflang, `x-default` → Spanish.
-3. `docs/stack-and-deployment-context.md` — Astro, static IONOS, forms, env.
+3. `docs/stack-and-deployment-context.md` — Astro, Cloudflare Pages + Functions, forms, env.
 4. `src/i18n/route-registry.ts` — **live slug matrix** and `href(locale, iaKey)`.
 
 Before **booking**: `src/features/booking-nubimed/` and `openspec/specs/` / archived change for Nubimed if you need the contract.
@@ -88,8 +89,9 @@ Full human index: README, section **Document map**. Some titles there may not ex
 - **UI:** Astro components. Reuse `src/components/ui/` (Button, Container, Section, Heading, …).
 - **Islands:** **Preact** (`@astrojs/preact`, `jsxImportSource: preact`). Hydrate with `client:load` / `client:visible` / `client:idle` only where needed. Do not add React unless docs change.
 - **Content:** copy in `src/i18n/*`; blog in `src/content/blog/` via `src/content.config.ts`.
-- **Host:** IONOS Hosting Plus, **static** `astro build` → `dist/`. No BFF on IONOS.
-- **Forms:** POST to `PUBLIC_FORM_POST_URL` (vendor TBD). No server-side POST on IONOS.
+- **Host:** **Cloudflare Pages** (git deploy). The site is still a **static** `astro build` → `dist/` (no SSR, no Astro adapter).
+- **Only server code:** the same-origin Nubimed proxy `functions/__nubimed-proxy/[[path]].ts` (Pages Function, allowlisted routes, no body logging). It is the single sanctioned exception; no other BFF or backend. Runtime env (Cloudflare dashboard): `PUBLIC_NUBIMED_CLINICA_ID` (required), `PUBLIC_NUBIMED_VENDOR_ORIGIN` (optional). Every `PUBLIC_*` used at build must also be set in the Cloudflare build env.
+- **Forms:** POST to `PUBLIC_FORM_POST_URL` (vendor TBD). No first-party server-side form handling.
 - **i18n routes:** locale-first `/{es|en|ca|fr}/…`, `trailingSlash: 'always'`.
 
 ## Where things live
@@ -110,13 +112,15 @@ Full human index: README, section **Document map**. Some titles there may not ex
 
 ## Product rules (verify in `docs/` + code)
 
-- **Valuation-first** on key pages. Booking and WhatsApp are secondary (`docs/site-architecture.md`).
-- Booking exists as a utility route and is **not** a primary nav item (`src/i18n/nav.ts` excludes `booking`).
+- **Valuation-first** on key pages; "Solicitar valoración" leads to booking when enabled (`docs/site-architecture.md`).
+- Booking is reactivated behind the `bookingPublic` flag in `src/i18n/site-features.ts` (off = release-1 WhatsApp/contact CTAs). CTA routing: generic CTAs → booking without preset; capilar → `preset=386`; facial → `preset=3`. Nubimed IDs live only in `src/features/booking-nubimed/config.ts`.
+- Booking is a utility route and is **not** a primary nav item (`src/i18n/nav.ts` excludes `booking`).
+- A floating WhatsApp button renders on the home only (`src/components/WhatsAppFloat.astro`).
 - Booking stays **`noindex`** (`BaseLayout.astro` + sitemap filter in `astro.config.mjs`).
 - Four locales: **`es`** (primary), then **`en`**, **`ca`**, **`fr`**. `hreflang` including **`x-default`** → Spanish URLs.
 - Build internal links with `href(lang, iaKey)` from `route-registry.ts`. Do not hardcode Spanish segments on EN/FR/CA.
 - Practice/contact values come from `PUBLIC_*` env (see `.env.example`; env var names retained as technical identifiers). Phone for UI: `PUBLIC_CLINIC_PHONE`. WhatsApp: `PUBLIC_WHATSAPP_E164` only for `wa.me`.
-- Primary CTA pattern: solicitar valoración. Do not make “Reservar cita” the dominant home/pillar action.
+- Primary CTA pattern: solicitar valoración (routes to booking when `bookingPublic`). Do not make “Reservar cita” the dominant home/pillar action.
 
 ## Code conventions
 

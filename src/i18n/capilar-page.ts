@@ -214,7 +214,7 @@ const spanishCapilarPageContent: CapilarPageContent = {
 	finalCta: {
 		h2: 'Empieza con un diagnóstico capilar',
 		body: 'El primer paso es entender tu caso y definir un plan adecuado.',
-		primary: 'Solicitar diagnostico capilar',
+		primary: 'Solicitar diagnóstico capilar',
 	},
 };
 
@@ -362,7 +362,7 @@ export const capilarPageContent: Record<Locale, CapilarPageContent> = {
 		finalCta: {
 			h2: 'Start your transformation today.',
 			body: 'Book your first diagnostic consultation and discover the potential of your hair health.',
-			primary: 'Book Medical Appointment',
+			primary: 'Request a hair diagnosis',
 		},
 	},
 	ca: {
@@ -507,7 +507,7 @@ export const capilarPageContent: Record<Locale, CapilarPageContent> = {
 		finalCta: {
 			h2: 'Comença avui la teva transformació.',
 			body: 'Reserva la teva primera consulta diagnòstica i descobreix el potencial de la teva salut capil·lar.',
-			primary: 'Agendar visita mèdica',
+			primary: 'Sol·licitar diagnòstic capil·lar',
 		},
 	},
 	fr: {
@@ -652,7 +652,7 @@ export const capilarPageContent: Record<Locale, CapilarPageContent> = {
 		finalCta: {
 			h2: 'Commencez votre transformation des aujourd hui.',
 			body: 'Reservez votre premiere consultation diagnostique et decouvrez le potentiel de votre sante capillaire.',
-			primary: 'Prendre rendez-vous medical',
+			primary: 'Demander un diagnostic capillaire',
 		},
 	},
 };

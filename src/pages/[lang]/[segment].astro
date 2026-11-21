@@ -7,12 +7,15 @@ import CapilarPillarPage from '../../components/capilar/CapilarPillarPage.astro'
 import CorporalPillarPage from '../../components/corporal/CorporalPillarPage.astro';
 import FacialPillarPage from '../../components/facial/FacialPillarPage.astro';
 import TrustPage from '../../components/trust/TrustPage.astro';
-import { bookingPlaceholderCta, pageStubsBySegment } from '../../i18n/page-stubs';
+import { bookingOnlineStub, bookingPlaceholderCta, pageStubsBySegment } from '../../i18n/page-stubs';
 import { capilarPageContent } from '../../i18n/capilar-page';
 import { corporalPageContent } from '../../i18n/corporal-page';
 import { facialPageContent } from '../../i18n/facial-page';
 import { trustPageContent } from '../../i18n/trust-page';
 import { resolveBookingCta } from '../../i18n/booking-links';
+import { bookingPublic } from '../../i18n/site-features';
+import BookingFlow from '../../features/booking-nubimed/BookingFlow';
+import { centroAddressesFromEnv } from '../../features/booking-nubimed/config';
 import { href, iaKeyFromPath, type IaKey, segmentFor, stubRecordKeyFromIaKey } from '../../i18n/route-registry';
 
 export function getStaticPaths() {
@@ -85,7 +88,7 @@ if (iaKey === 'contact') {
 	if (!stubKey) {
 		return Astro.redirect(`/${lang}/`, 302);
 	}
-	const stub = pageStubsBySegment[stubKey][lang];
+	const stub = iaKey === 'booking' && bookingPublic ? bookingOnlineStub[lang] : pageStubsBySegment[stubKey][lang];
 	title = stub.title;
 	heading = stub.heading;
 	lead = stub.lead;
@@ -104,8 +107,11 @@ if (iaKey === 'contact') {
 				{iaKey === 'capilar' ? <CapilarPillarPage lang={lang} content={capilarContent} /> : null}
 				{iaKey === 'trust' ? <TrustPage lang={lang} content={trustContent} /> : null}
 				{iaKey !== 'facial' && iaKey !== 'corporal' && iaKey !== 'capilar' && iaKey !== 'trust' ? <h1 class:list={[bookingBlock && 'booking-page__title']}>{heading}</h1> : null}
-				{iaKey !== 'facial' && iaKey !== 'corporal' && iaKey !== 'capilar' && iaKey !== 'trust' ? <p>{lead}</p> : null}
-				{bookingBlock ? (
+				{iaKey !== 'facial' && iaKey !== 'corporal' && iaKey !== 'capilar' && iaKey !== 'trust' ? <p class:list={[bookingBlock && 'booking-page__lead']}>{lead}</p> : null}
+				{bookingBlock && bookingPublic ? (
+					<BookingFlow client:load lang={lang} centroAddresses={centroAddressesFromEnv()} />
+				) : null}
+				{bookingBlock && !bookingPublic ? (
 					<div class="booking-placeholder" data-booking-placeholder>
 						<a
 							class="booking-placeholder__primary"
