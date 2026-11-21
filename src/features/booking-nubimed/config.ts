@@ -1,60 +1,115 @@
 import type { SiteLocale } from './types';
 
+export type CentroKey = 'barcelona' | 'el-vendrell';
+
+/** Centros (areas Nubimed) de la clinica 1212; etiquetas compartidas entre especialidades. */
+export const CENTROS: Record<CentroKey, { readonly labels: Record<SiteLocale, string> }> = {
+	barcelona: {
+		labels: { es: 'Barcelona', en: 'Barcelona', ca: 'Barcelona', fr: 'Barcelone' },
+	},
+	'el-vendrell': {
+		labels: { es: 'El Vendrell', en: 'El Vendrell', ca: 'El Vendrell', fr: 'El Vendrell' },
+	},
+};
+
+export interface SpecialtyCentro {
+	readonly centro: CentroKey;
+	/** `area_id` en huecos_agenda y `area` en `/new`. */
+	readonly areaId: number;
+	readonly firstVisitTreatmentId: number;
+	readonly treatmentsTreatmentId: number;
+	/** Sublinea de la tarjeta "Tratamientos" (siglas del panel Nubimed; iguales en los 4 locales). */
+	readonly treatmentsDetail: string;
+}
+
+/** Sublinea de la tarjeta "Primera visita" (duracion y precio del panel Nubimed: 45 min, 100 €). */
+export const FIRST_VISIT_DETAIL = '45 min. - 100€';
+
 export interface SpecialtyCatalogEntry {
-	readonly vendorId: 3 | 4 | 5;
+	readonly vendorId: 3 | 386;
 	readonly slug: string;
 	/** Lowercase tokens for preset matching (slug, aliases, string id). */
 	readonly matchKeys: readonly string[];
-	/** Obligatorio para `huecos_agenda` (panel Nubimed por clinica). */
-	readonly clinicaTratamientoId?: number;
-	/** Por defecto `presencial` si el portal lo exige. */
-	readonly tipoHorario?: string;
+	readonly tipoHorario: 'presencial';
 	readonly labels: Record<SiteLocale, string>;
+	readonly centros: readonly SpecialtyCentro[];
 }
 
+export const TREATMENT_KIND_LABELS: Record<'firstVisit' | 'treatments', Record<SiteLocale, string>> = {
+	firstVisit: {
+		es: 'Primera visita',
+		en: 'First visit',
+		ca: 'Primera visita',
+		fr: 'Première visite',
+	},
+	treatments: {
+		es: 'Tratamientos',
+		en: 'Treatments',
+		ca: 'Tractaments',
+		fr: 'Traitements',
+	},
+};
+
 /**
- * Single source of truth for vendor specialty ids (REQ-3).
+ * Single source of truth for vendor specialty / area / treatment ids (REQ-3).
  * Do not duplicate these ids elsewhere as authority.
  */
 export const SPECIALTY_CATALOG: readonly SpecialtyCatalogEntry[] = [
 	{
 		vendorId: 3,
 		slug: 'medicina-estetica',
-		matchKeys: ['medicina-estetica', 'estetica', 'med-estetica', '3'],
-		clinicaTratamientoId: 244529,
+		matchKeys: ['medicina-estetica', 'estetica', '3'],
 		tipoHorario: 'presencial',
 		labels: {
-			es: 'Medicina estetica',
+			es: 'Medicina estética',
 			en: 'Aesthetic medicine',
-			ca: 'Medicina estetica',
-			fr: 'Medecine esthetique',
+			ca: 'Medicina estètica',
+			fr: 'Médecine esthétique',
 		},
+		centros: [
+			{
+				centro: 'barcelona',
+				areaId: 15070,
+				firstVisitTreatmentId: 389741,
+				treatmentsTreatmentId: 389745,
+				treatmentsDetail: 'BTX · FILLERS · BIOESTIMUL · IPL · PRP',
+			},
+			{
+				centro: 'el-vendrell',
+				areaId: 15072,
+				firstVisitTreatmentId: 389742,
+				treatmentsTreatmentId: 389746,
+				treatmentsDetail: 'BTX · FILLERS · BIOESTIMUL · PRP',
+			},
+		],
 	},
 	{
-		vendorId: 4,
-		slug: 'medicina-capilar',
-		matchKeys: ['medicina-capilar', 'capilar', 'hair', '4'],
-		// clinica_tratamiento_id: rellenar desde el panel Nubimed (huecos_agenda lo exige).
+		vendorId: 386,
+		slug: 'tricologia',
+		matchKeys: ['tricologia', 'capilar', 'hair', 'medicina-capilar', '386'],
 		tipoHorario: 'presencial',
 		labels: {
-			es: 'Medicina capilar',
-			en: 'Hair medicine',
-			ca: 'Medicina capil·lar',
-			fr: 'Medecine capillaire',
+			es: 'Tricología',
+			en: 'Trichology',
+			ca: 'Tricologia',
+			fr: 'Trichologie',
 		},
-	},
-	{
-		vendorId: 5,
-		slug: 'medicina-regenerativa',
-		matchKeys: ['medicina-regenerativa', 'regenerativa', '5'],
-		// clinica_tratamiento_id: rellenar desde el panel Nubimed (huecos_agenda lo exige).
-		tipoHorario: 'presencial',
-		labels: {
-			es: 'Medicina regenerativa',
-			en: 'Regenerative medicine',
-			ca: 'Medicina regenerativa',
-			fr: 'Medecine regenerative',
-		},
+		centros: [
+			{
+				centro: 'barcelona',
+				areaId: 15071,
+				firstVisitTreatmentId: 389743,
+				treatmentsTreatmentId: 389747,
+				treatmentsDetail: 'MESO · PRP',
+			},
+			{
+				centro: 'el-vendrell',
+				areaId: 15073,
+				firstVisitTreatmentId: 389744,
+				treatmentsTreatmentId: 389748,
+				treatmentsDetail: 'MESO · PRP',
+			},
+		],
 	},
 ] as const;
 
@@ -72,6 +127,23 @@ export function catalogEntryBySlugOrId(preset: string): SpecialtyCatalogEntry | 
 
 export function labelFor(entry: SpecialtyCatalogEntry, lang: SiteLocale): string {
 	return entry.labels[lang];
+}
+
+/** Centro de la especialidad por clave (`?sede=`); `undefined` si no existe. */
+export function centroFor(entry: SpecialtyCatalogEntry, key: string): SpecialtyCentro | undefined {
+	const k = key.trim().toLowerCase();
+	if (!k) return undefined;
+	return entry.centros.find((c) => c.centro === k);
+}
+
+/** Direcciones por centro desde env (accesos literales para que Vite los reemplace). */
+export function centroAddressesFromEnv(): Partial<Record<CentroKey, string>> {
+	const out: Partial<Record<CentroKey, string>> = {};
+	const barcelona = import.meta.env.PUBLIC_CLINIC_ADDRESS_BARCELONA?.trim();
+	const elVendrell = import.meta.env.PUBLIC_CLINIC_ADDRESS_EL_VENDRELL?.trim();
+	if (barcelona) out.barcelona = barcelona;
+	if (elVendrell) out['el-vendrell'] = elVendrell;
+	return out;
 }
 
 /** Numeric dial codes without +; ISO region for Intl.DisplayNames. */

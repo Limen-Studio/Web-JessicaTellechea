@@ -3,7 +3,7 @@
 }
 
 .booking-page__title {
-	margin: 0;
+	margin: var(--space-lg) 0 0;
 	font-family: var(--font-serif-display);
 	font-size: clamp(2rem, 4.5vw, 3.1rem);
 	line-height: 1.18;
@@ -13,9 +13,22 @@
 	text-align: center;
 }
 
+/** Bajada del título: más aire y medida corta para el tono editorial. */
+.booking-page__lead {
+	max-width: 38rem;
+	margin: var(--space-md) auto 0;
+	font-size: 0.98rem;
+	line-height: 1.7;
+	color: var(--color-muted);
+	text-align: center;
+	text-wrap: balance;
+}
+
 .booking-flow-shell {
 	display: grid;
 	gap: var(--space-lg);
+	margin-top: var(--space-xl);
+	margin-bottom: var(--space-xl);
 }
 
 .booking-flow {
@@ -299,6 +312,63 @@
 	height: 100%;
 	justify-content: center;
 	text-align: center;
+}
+
+/** Tarjeta de servicio: nombre + sublínea dorada (duración/precio o siglas). */
+.booking-flow__list--cards .booking-flow__slot--treatment {
+	flex-direction: column;
+	gap: var(--space-xs);
+}
+
+.booking-flow__slot-detail {
+	font-family: var(--font-sans);
+	font-size: 0.78rem;
+	font-weight: 300;
+	letter-spacing: 0.08em;
+	line-height: 1.4;
+	/** Dorado corporativo oscurecido para AA sobre blanco (~4.6:1; el champagne puro da ~2.2:1). */
+	color: color-mix(in srgb, var(--color-champagne) 55%, var(--color-text));
+}
+
+/** Aviso editorial al pie del paso Servicio (sobre "Anterior"): filete dorado, fondo apenas cálido. */
+.booking-flow__visit-notice {
+	flex: 0 0 auto;
+	margin-top: var(--space-md);
+	margin-bottom: var(--space-md);
+	padding: var(--space-md) var(--space-md) var(--space-md) calc(var(--space-md) + 2px);
+	border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+	border-left: 2px solid var(--color-champagne);
+	border-radius: var(--radius-editorial);
+	background: color-mix(in srgb, var(--color-bg) 70%, var(--color-surface));
+}
+
+.booking-flow__visit-notice-list {
+	display: grid;
+	gap: var(--space-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.booking-flow__visit-notice-list li {
+	position: relative;
+	padding-left: var(--space-md);
+	font-family: var(--font-sans);
+	font-size: 0.84rem;
+	font-weight: 400;
+	line-height: 1.6;
+	color: var(--color-muted);
+}
+
+.booking-flow__visit-notice-list li::before {
+	content: '';
+	position: absolute;
+	left: 0.2rem;
+	top: 0.72em;
+	width: 0.3rem;
+	height: 0.3rem;
+	border-radius: 999px;
+	background: var(--color-champagne);
 }
 
 .booking-flow__choice {

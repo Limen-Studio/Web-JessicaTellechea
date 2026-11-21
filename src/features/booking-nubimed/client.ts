@@ -107,7 +107,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 
 	async function fetchTreatmentsBySpecialty(
 		signal: AbortSignal,
-		params: { locale: string; especialidadId: number },
+		params: { locale: string; especialidadId: number; areaId: number },
 	): Promise<VendorTreatmentOption[]> {
 		const id = opts.getClinicaId();
 		assertClinicaId(id);
@@ -115,6 +115,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 		q.set('locale', params.locale);
 		q.set('clinica_id', String(id));
 		q.set('especialidad_id', String(params.especialidadId));
+		q.set('area_id', String(params.areaId));
 		const url = joinUrl(base, `/ajax/obtener_clinica_tratamientos?${q.toString()}`);
 		const res = await fetch(url, {
 			signal,
@@ -144,6 +145,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 		locale: string;
 		especialidadId: number;
 		clinicaTratamientoId: number;
+		areaId: number;
 		diaSeleccionado: string;
 		tipoHorario: string;
 	}): URLSearchParams {
@@ -154,7 +156,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 		q.set('dia_seleccionado', p.diaSeleccionado);
 		q.set('clinica_tratamiento_id', String(p.clinicaTratamientoId));
 		q.set('clinica_mutua_id', '');
-		q.set('area_id', '');
+		q.set('area_id', String(p.areaId));
 		q.set('tipo_horario', p.tipoHorario);
 		return q;
 	}
@@ -176,6 +178,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 			locale: string;
 			especialidadId: number;
 			clinicaTratamientoId: number;
+			areaId: number;
 			tipoHorario: string;
 		},
 	): Promise<unknown> {
@@ -183,6 +186,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 			locale: params.locale,
 			especialidadId: params.especialidadId,
 			clinicaTratamientoId: params.clinicaTratamientoId,
+			areaId: params.areaId,
 			diaSeleccionado: '',
 			tipoHorario: params.tipoHorario,
 		});
@@ -223,6 +227,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 			especialidadId: number;
 			diaDDMMYYYY: string;
 			clinicaTratamientoId: number;
+			areaId: number;
 			tipoHorario: string;
 		},
 	): Promise<unknown> {
@@ -230,6 +235,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 			locale: params.locale,
 			especialidadId: params.especialidadId,
 			clinicaTratamientoId: params.clinicaTratamientoId,
+			areaId: params.areaId,
 			diaSeleccionado: params.diaDDMMYYYY,
 			tipoHorario: params.tipoHorario,
 		});
@@ -253,7 +259,13 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 		fetchTreatmentsBySpecialty,
 		async fetchDayStrings(
 			signal: AbortSignal,
-			p: { locale: string; especialidadId: number; clinicaTratamientoId: number; tipoHorario: string },
+			p: {
+				locale: string;
+				especialidadId: number;
+				clinicaTratamientoId: number;
+				areaId: number;
+				tipoHorario: string;
+			},
 		): Promise<string[]> {
 			const json = await fetchDaysJson(signal, p);
 			return normalizeDaysJson(json);
@@ -265,6 +277,7 @@ export function createNubimedClient(opts: NubimedClientOptions) {
 				especialidadId: number;
 				diaDDMMYYYY: string;
 				clinicaTratamientoId: number;
+				areaId: number;
 				tipoHorario: string;
 			},
 		): Promise<Slot[]> {

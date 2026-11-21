@@ -181,6 +181,34 @@ export const pageStubsBySegment: Record<StubSegment, Record<Locale, PageStub>> =
 	},
 };
 
+/** Online booking copy (route `booking` when `bookingPublic` is true). */
+export const bookingOnlineStub: Record<Locale, PageStub> = {
+	es: {
+		title: 'Dra. Jessica Tellechea - Reservar cita online',
+		heading: 'Reserva tu cita online',
+		lead:
+			'Elige el centro, el tratamiento y el momento que prefieras para tu visita.',
+	},
+	en: {
+		title: 'Dr. Jessica Tellechea - Book an appointment online',
+		heading: 'Book your appointment online',
+		lead:
+			'Choose the clinic, the treatment and the time you prefer for your visit.',
+	},
+	ca: {
+		title: 'Dra. Jessica Tellechea - Reservar cita en línia',
+		heading: 'Reserva la teva cita en línia',
+		lead:
+			'Tria el centre, el tractament i el moment que prefereixis per a la teva visita.',
+	},
+	fr: {
+		title: 'Dre Jessica Tellechea - Prendre rendez-vous en ligne',
+		heading: 'Prenez rendez-vous en ligne',
+		lead:
+			'Choisissez le centre, le soin et le moment qui vous conviennent pour votre visite.',
+	},
+};
+
 /** Release-1 booking placeholder CTA labels (see `defer-booking-cta-to-whatsapp`). */
 export const bookingPlaceholderCta: Record<Locale, { whatsapp: string; contact: string }> = {
 	es: { whatsapp: 'Escribir por WhatsApp', contact: 'Ver otras vías de contacto' },

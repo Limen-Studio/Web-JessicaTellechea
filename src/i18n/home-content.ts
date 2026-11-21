@@ -33,6 +33,7 @@ export type HomeContent = {
 	};
 	authority: { statements: string[] };
 	finalCta: { h2: string; body: string; cta: string };
+	whatsappFloat: { ariaLabel: string };
 };
 
 const es: HomeContent = {
@@ -124,6 +125,7 @@ const es: HomeContent = {
 		body: 'El primer paso es entender tu caso y definir el camino adecuado.',
 		cta: 'SOLICITAR VALORACIÓN',
 	},
+	whatsappFloat: { ariaLabel: "Escribir por WhatsApp (se abre en una pestaña nueva)" },
 };
 
 const en: HomeContent = {
@@ -131,7 +133,7 @@ const en: HomeContent = {
 		h1: 'Your best version, with medical judgement',
 		subtitle: 'Aesthetic medicine that respects who you are',
 		supporting: 'Natural outcomes. Honest diagnosis. Real follow-up.',
-		ctaPrimary: 'SOLICITAR VALORACIÓN',
+		ctaPrimary: 'REQUEST AN ASSESSMENT',
 		ctaSecondary: 'EXPLORE THE MEDICAL CRITERIA',
 		instagramLabel: 'Instagram',
 		instagramAriaLabel: 'Dr Jessica Tellechea on Instagram (opens in a new tab)',
@@ -213,8 +215,9 @@ const en: HomeContent = {
 	finalCta: {
 		h2: 'Start with an assessment',
 		body: 'The first step is understanding your case and defining the right path.',
-		cta: 'SOLICITAR VALORACIÓN',
+		cta: 'REQUEST AN ASSESSMENT',
 	},
+	whatsappFloat: { ariaLabel: "Chat on WhatsApp (opens in a new tab)" },
 };
 
 const ca: HomeContent = {
@@ -224,6 +227,7 @@ const ca: HomeContent = {
 		h1: 'La teva millor versió, amb criteri mèdic',
 		subtitle: 'Medicina estètica que respecta la teva identitat',
 		supporting: 'Resultats naturals. Diagnòstic honest. Seguiment real.',
+		ctaPrimary: 'SOL·LICITAR VALORACIÓ',
 		ctaSecondary: 'CONEIX EL CRITERI MÈDIC',
 		instagramLabel: 'Instagram',
 		instagramAriaLabel: 'Instagram de la Dra. Jessica Tellechea (s\'obre en una pestanya nova)',
@@ -305,8 +309,9 @@ const ca: HomeContent = {
 	finalCta: {
 		h2: 'Comença amb una valoració',
 		body: 'El primer pas és entendre el teu cas i definir el camí adequat.',
-		cta: 'SOLICITAR VALORACIÓN',
+		cta: 'SOL·LICITAR VALORACIÓ',
 	},
+	whatsappFloat: { ariaLabel: "Escriu-nos per WhatsApp (s'obre en una pestanya nova)" },
 };
 
 const fr: HomeContent = {
@@ -316,6 +321,7 @@ const fr: HomeContent = {
 		h1: 'Votre meilleure version, avec un critère médical',
 		subtitle: 'Une médecine esthétique qui respecte votre identité',
 		supporting: 'Des résultats naturels. Un diagnostic honnête. Un suivi réel.',
+		ctaPrimary: 'DEMANDER UNE ÉVALUATION',
 		ctaSecondary: 'DÉCOUVREZ LE CRITÈRE MÉDICAL',
 		instagramLabel: 'Instagram',
 		instagramAriaLabel: 'Instagram de la Dre Jessica Tellechea (s\'ouvre dans un nouvel onglet)',
@@ -397,8 +403,9 @@ const fr: HomeContent = {
 	finalCta: {
 		h2: 'Commencez par une évaluation',
 		body: 'La première étape consiste à comprendre votre situation et à définir la bonne voie.',
-		cta: 'SOLICITAR VALORACIÓN',
+		cta: 'DEMANDER UNE ÉVALUATION',
 	},
+	whatsappFloat: { ariaLabel: "Écrire sur WhatsApp (s'ouvre dans un nouvel onglet)" },
 };
 
 export const homeContent: Record<Locale, HomeContent> = {

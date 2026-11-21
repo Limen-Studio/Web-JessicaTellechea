@@ -11,4 +11,5 @@
 @import './components/legal-prose.css' layer(components);
 @import './components/cookie-consent.css' layer(components);
 @import './components/booking-flow.css' layer(components);
+@import './components/whatsapp-float.css' layer(components);
 

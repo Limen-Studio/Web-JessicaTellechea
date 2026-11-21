@@ -6,3 +6,6 @@ export const blogPublic = false;
 
 /** @see docs/site-architecture.md — enable when corporal pillar launches. */
 export const corporalPublic = false;
+
+/** Public Nubimed booking flow. Keep `false` until Phase 8 verification passes (rollback = set back to false). */
+export const bookingPublic = true;

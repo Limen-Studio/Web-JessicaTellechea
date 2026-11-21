@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import {
+	CENTROS,
 	catalogEntryBySlugOrId,
+	centroFor,
+	FIRST_VISIT_DETAIL,
 	labelFor,
 	phonePrefixSelectOptions,
 	SPECIALTY_CATALOG,
+	TREATMENT_KIND_LABELS,
 	type SpecialtyCatalogEntry,
+	type SpecialtyCentro,
 } from './config';
 import { vendorLocaleFromSite, t } from './i18n';
 import type { NewUrlSelection } from './build-new-url';
@@ -24,13 +29,16 @@ import { executeRecaptchaForBooking } from './recaptcha';
 import { BookingFlowError } from './types';
 import type { BookingFlowProps, BootstrapSession, SiteLocale, Slot } from './types';
 type Phase = 'pick' | 'details' | 'success';
-type PickStep = 'specialty' | 'treatment' | 'datetime';
+type PickStep = 'specialty' | 'area' | 'treatment' | 'datetime';
 
 interface TreatmentOption {
 	readonly id: string;
 	readonly specialtyVendorId: number;
 	readonly clinicaTratamientoId: number;
+	readonly areaId: number;
 	readonly label: string;
+	/** Sublinea dorada de la tarjeta (duracion/precio o siglas de tratamientos). */
+	readonly detail: string;
 	readonly tipoHorario: string;
 }
 
@@ -42,7 +50,6 @@ function isRuntimeLocalhost(): boolean {
 
 function nubimedBaseUrl(): string {
 	const proxy = import.meta.env.PUBLIC_NUBIMED_PROXY_URL?.trim();
-	const vendor = import.meta.env.PUBLIC_NUBIMED_VENDOR_ORIGIN?.trim();
 	const explicitProxy = (proxy || '').replace(/\/$/, '');
 	if (explicitProxy) {
 		// En build/preview no debemos fijar localhost como base remota.
@@ -50,13 +57,8 @@ function nubimedBaseUrl(): string {
 		const isLocalProxy = /^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(?:\/|$)/i.test(explicitProxy);
 		if (!isLocalProxy || import.meta.env.DEV || isRuntimeLocalhost()) return explicitProxy;
 	}
-	if ((import.meta.env.DEV || isRuntimeLocalhost()) && vendor && typeof globalThis !== 'undefined' && 'location' in globalThis) {
-		const origin = (globalThis as unknown as Window).location?.origin;
-		if (origin?.startsWith('http')) {
-			return `${origin}/__nubimed-proxy`.replace(/\/$/, '');
-		}
-	}
-	return (vendor || '').replace(/\/$/, '');
+	/** Base same-origin relativa (Vite proxy en dev, Pages Function en produccion); sin fallback al origen del vendor (CORS). */
+	return '/__nubimed-proxy';
 }
 
 function portalFallbackUrl(clinicaId: number): string {
@@ -168,35 +170,29 @@ export default function BookingFlow({
 	lang,
 	presetSpecialtySlug,
 	presetTreatmentId,
-	clinicAddress: clinicAddressProp,
+	centroAddresses,
 }: BookingFlowProps) {
 	const strings = t(lang);
 	const prefixOptions = useMemo(() => phonePrefixSelectOptions(lang), [lang]);
 	const vendorLoc = vendorLocaleFromSite(lang);
 	const clinicaId = clinicaIdFromEnv();
 	const baseUrl = nubimedBaseUrl();
-	const clinicAddress =
-		(typeof clinicAddressProp === 'string' ? clinicAddressProp.trim() : '') ||
-		import.meta.env.PUBLIC_CLINIC_ADDRESS?.trim() ||
-		'';
 
 	/** Prop from Astro is often empty on static builds; merge runtime `?preset=` from the browser URL. */
 	const trimPreset = (v: string | null | undefined) => (typeof v === 'string' ? v.trim() : '');
 	const [resolvedPresetSlug, setResolvedPresetSlug] = useState(() => trimPreset(presetSpecialtySlug));
 	const [resolvedPresetTreatmentId, setResolvedPresetTreatmentId] = useState(() => trimPreset(presetTreatmentId));
+	const [resolvedSede, setResolvedSede] = useState('');
 
 	useLayoutEffect(() => {
-		const fromProp = trimPreset(presetSpecialtySlug);
-		if (fromProp) {
-			setResolvedPresetSlug((prev) => (prev === fromProp ? prev : fromProp));
-			return;
-		}
 		if (typeof window === 'undefined') return;
 		const params = new URLSearchParams(window.location.search);
-		const fromUrlPreset = trimPreset(params.get('preset'));
-		if (fromUrlPreset) setResolvedPresetSlug((prev) => (prev === fromUrlPreset ? prev : fromUrlPreset));
+		const preset = trimPreset(presetSpecialtySlug) || trimPreset(params.get('preset'));
+		if (preset) setResolvedPresetSlug((prev) => (prev === preset ? prev : preset));
 		const fromUrlTreatment = trimPreset(params.get('treatment'));
 		if (fromUrlTreatment) setResolvedPresetTreatmentId((prev) => (prev === fromUrlTreatment ? prev : fromUrlTreatment));
+		const fromUrlSede = trimPreset(params.get('sede')).toLowerCase();
+		if (fromUrlSede) setResolvedSede((prev) => (prev === fromUrlSede ? prev : fromUrlSede));
 	}, [presetSpecialtySlug, presetTreatmentId]);
 
 	const presetEntry = useMemo(() => {
@@ -204,10 +200,18 @@ export default function BookingFlow({
 		return catalogEntryBySlugOrId(resolvedPresetSlug);
 	}, [resolvedPresetSlug]);
 
-	const invalidPreset = resolvedPresetSlug !== '' && presetEntry === undefined;
+	const invalidSpecialtyPreset = resolvedPresetSlug !== '' && presetEntry === undefined;
 
 	const hasValidPreset = resolvedPresetSlug !== '' && presetEntry !== undefined;
-	const showSpecialtyPicker = !hasValidPreset || invalidPreset;
+	const sedeEntry = useMemo(
+		() => (presetEntry && resolvedSede ? centroFor(presetEntry, resolvedSede) : undefined),
+		[presetEntry, resolvedSede],
+	);
+	const invalidSede = resolvedSede !== '' && hasValidPreset && !sedeEntry;
+	const invalidPreset = invalidSpecialtyPreset || invalidSede;
+	const showSpecialtyPicker = !hasValidPreset || invalidSpecialtyPreset;
+	const showAreaPicker = !sedeEntry;
+	const initialPickStep: PickStep = showSpecialtyPicker ? 'specialty' : sedeEntry ? 'treatment' : 'area';
 
 	const [bootstrap, setBootstrap] = useState<BootstrapSession | null>(null);
 	const [gateUrl, setGateUrl] = useState<string | null>(null);
@@ -215,22 +219,21 @@ export default function BookingFlow({
 	const [bootLoading, setBootLoading] = useState(true);
 
 	const [specialty, setSpecialty] = useState<SpecialtyCatalogEntry | null>(() => presetEntry ?? null);
-	const [pickStep, setPickStep] = useState<PickStep>(() => (showSpecialtyPicker ? 'specialty' : 'treatment'));
+	const [centro, setCentro] = useState<SpecialtyCentro | null>(() => sedeEntry ?? null);
+	const [pickStep, setPickStep] = useState<PickStep>(initialPickStep);
 	const [selectedTreatment, setSelectedTreatment] = useState<TreatmentOption | null>(null);
-	const [treatmentOptions, setTreatmentOptions] = useState<TreatmentOption[]>([]);
-	const [treatmentsLoading, setTreatmentsLoading] = useState(false);
-	const [treatmentsErr, setTreatmentsErr] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (!presetEntry) return;
 		setSpecialty(presetEntry);
+		setCentro(sedeEntry ?? null);
 		setSelectedTreatment(null);
-		setPickStep(showSpecialtyPicker ? 'specialty' : 'treatment');
-	}, [presetEntry, showSpecialtyPicker]);
+		setPickStep(initialPickStep);
+	}, [presetEntry, sedeEntry, initialPickStep]);
 
 	useEffect(() => {
-		setPickStep(showSpecialtyPicker ? 'specialty' : 'treatment');
-	}, [showSpecialtyPicker]);
+		setPickStep(initialPickStep);
+	}, [initialPickStep]);
 
 	const csrfRef = useRef<string | undefined>(undefined);
 	const client = useMemo(
@@ -243,49 +246,23 @@ export default function BookingFlow({
 		[baseUrl, clinicaId],
 	);
 
-	const loadTreatments = useCallback(
-		async (spec: SpecialtyCatalogEntry, signal: AbortSignal) => {
-			setTreatmentsLoading(true);
-			setTreatmentsErr(null);
-			setTreatmentOptions([]);
-			try {
-				const list = await client.fetchTreatmentsBySpecialty(signal, {
-					locale: vendorLoc,
-					especialidadId: spec.vendorId,
-				});
-				if (signal.aborted) return;
-				setTreatmentOptions(
-					list.map((option) => ({
-						id: `${spec.vendorId}-${option.id}`,
-						specialtyVendorId: spec.vendorId,
-						clinicaTratamientoId: Number(option.id),
-						label: option.label,
-						tipoHorario: option.modalidad || spec.tipoHorario || 'presencial',
-					})),
-				);
-			} catch (e) {
-				if (signal.aborted) return;
-				if (e instanceof GateBlockedError) {
-					setGateUrl(portalFallbackUrl(clinicaId));
-				} else {
-					setTreatmentsErr(errMessage(e, lang));
-				}
-			} finally {
-				if (!signal.aborted) setTreatmentsLoading(false);
-			}
-		},
-		[client, vendorLoc, clinicaId, lang],
-	);
-
-	const treatmentsAbortRef = useRef<AbortController | null>(null);
-	useEffect(() => {
-		if (!specialty || pickStep !== 'treatment') return;
-		treatmentsAbortRef.current?.abort();
-		const ac = new AbortController();
-		treatmentsAbortRef.current = ac;
-		void loadTreatments(specialty, ac.signal);
-		return () => ac.abort();
-	}, [specialty, pickStep, loadTreatments]);
+	/** Opciones derivadas del catalogo (AD-2): 2 por centro, sin peticiones al vendor. */
+	const treatmentOptions = useMemo((): TreatmentOption[] => {
+		if (!specialty || !centro) return [];
+		const make = (kind: 'firstVisit' | 'treatments', treatmentId: number, detail: string): TreatmentOption => ({
+			id: `${specialty.vendorId}-${treatmentId}`,
+			specialtyVendorId: specialty.vendorId,
+			clinicaTratamientoId: treatmentId,
+			areaId: centro.areaId,
+			label: TREATMENT_KIND_LABELS[kind][lang],
+			detail,
+			tipoHorario: specialty.tipoHorario,
+		});
+		return [
+			make('firstVisit', centro.firstVisitTreatmentId, FIRST_VISIT_DETAIL),
+			make('treatments', centro.treatmentsTreatmentId, centro.treatmentsDetail),
+		];
+	}, [specialty, centro, lang]);
 
 	useEffect(() => {
 		if (pickStep !== 'treatment' || selectedTreatment || !resolvedPresetTreatmentId) return;
@@ -334,18 +311,18 @@ export default function BookingFlow({
 	const [submitting, setSubmitting] = useState(false);
 
 	const newUrlSelection = useMemo((): NewUrlSelection | null => {
-		if (!specialty || !selectedSlot || !selectedDayRaw) return null;
-		const prefTratamientoId = selectedTreatment?.clinicaTratamientoId ?? specialty.clinicaTratamientoId;
-		if (prefTratamientoId == null) return null;
+		if (!specialty || !selectedSlot || !selectedDayRaw || !selectedTreatment) return null;
+		const prefTratamientoId = selectedTreatment.clinicaTratamientoId;
 		const prof =
 			selectedSlot.professionalIds.length > 1 ? professionalId : (selectedSlot.professionalIds[0] ?? null);
 		if (selectedSlot.professionalIds.length > 1 && professionalId == null) return null;
 		return {
 			specialtyVendorId: specialty.vendorId,
+			areaId: selectedTreatment.areaId,
 			prefTratamientoId,
 			prefHoraIso: selectedSlot.iso,
 			professionalId: prof,
-			tipoHorario: selectedTreatment?.tipoHorario ?? specialty.tipoHorario ?? 'presencial',
+			tipoHorario: selectedTreatment.tipoHorario,
 		};
 	}, [specialty, selectedSlot, selectedDayRaw, professionalId, selectedTreatment]);
 
@@ -387,7 +364,13 @@ export default function BookingFlow({
 	}, [runBootstrap]);
 
 	const loadDays = useCallback(
-		async (spec: SpecialtyCatalogEntry, treatmentId: number, treatmentTipoHorario: string, signal: AbortSignal) => {
+		async (
+			spec: SpecialtyCatalogEntry,
+			treatmentId: number,
+			areaId: number,
+			treatmentTipoHorario: string,
+			signal: AbortSignal,
+		) => {
 			setDaysLoading(true);
 			setDaysErr(null);
 			setDays([]);
@@ -401,6 +384,7 @@ export default function BookingFlow({
 					locale: vendorLoc,
 					especialidadId: spec.vendorId,
 					clinicaTratamientoId: treatmentId,
+					areaId,
 					tipoHorario,
 				});
 				if (signal.aborted) return;
@@ -435,6 +419,7 @@ export default function BookingFlow({
 		void loadDays(
 			specialty,
 			selectedTreatment.clinicaTratamientoId,
+			selectedTreatment.areaId,
 			selectedTreatment.tipoHorario,
 			ac.signal,
 		);
@@ -489,6 +474,7 @@ export default function BookingFlow({
 		async (
 			spec: SpecialtyCatalogEntry,
 			treatmentId: number,
+			areaId: number,
 			treatmentTipoHorario: string,
 			dayRaw: string,
 			signal: AbortSignal,
@@ -507,6 +493,7 @@ export default function BookingFlow({
 					especialidadId: spec.vendorId,
 					diaDDMMYYYY: diaParam,
 					clinicaTratamientoId: treatmentId,
+					areaId,
 					tipoHorario,
 				});
 				if (!signal.aborted) setSlots(list);
@@ -539,6 +526,7 @@ export default function BookingFlow({
 		void loadSlots(
 			specialty,
 			selectedTreatment.clinicaTratamientoId,
+			selectedTreatment.areaId,
 			selectedTreatment.tipoHorario,
 			selectedDayRaw,
 			ac.signal,
@@ -594,10 +582,9 @@ export default function BookingFlow({
 
 	const onSpecialtyChange = (spec: SpecialtyCatalogEntry) => {
 		setSpecialty(spec);
+		setCentro(null);
 		setSelectedTreatment(null);
-		setTreatmentOptions([]);
-		setTreatmentsErr(null);
-		setPickStep('treatment');
+		setPickStep('area');
 		setReadyToAutoAdvance(false);
 		setSelectedDayRaw(null);
 		setSlots([]);
@@ -606,6 +593,17 @@ export default function BookingFlow({
 		setPhase('pick');
 		setParsedNew(null);
 		setConfirmOpen(false);
+	};
+
+	const onCentroPick = (c: SpecialtyCentro) => {
+		setCentro(c);
+		setSelectedTreatment(null);
+		setReadyToAutoAdvance(false);
+		setSelectedDayRaw(null);
+		setSlots([]);
+		setSelectedSlot(null);
+		setProfessionalId(null);
+		setPickStep('treatment');
 	};
 
 	const onDayPick = (raw: string) => {
@@ -639,6 +637,21 @@ export default function BookingFlow({
 		setPickStep('specialty');
 	};
 
+	const onBackToArea = () => {
+		setReadyToAutoAdvance(false);
+		setSelectedTreatment(null);
+		setSelectedDayRaw(null);
+		setSlots([]);
+		setSelectedSlot(null);
+		setProfessionalId(null);
+		setPickStep('area');
+	};
+
+	const onBackFromTreatment = () => {
+		if (showAreaPicker) onBackToArea();
+		else onBackToSpecialty();
+	};
+
 	const onBackToTreatment = () => {
 		setReadyToAutoAdvance(false);
 		setSelectedDayRaw(null);
@@ -662,7 +675,8 @@ export default function BookingFlow({
 
 	const resetAfterSuccess = () => {
 		setPhase('pick');
-		setPickStep(showSpecialtyPicker ? 'specialty' : 'treatment');
+		setPickStep(initialPickStep);
+		setCentro(sedeEntry ?? null);
 		setParsedNew(null);
 		setConfirmOpen(false);
 		setReadyToAutoAdvance(false);
@@ -754,7 +768,7 @@ export default function BookingFlow({
 			setSubmitErr(strings.privacyRequired);
 			return;
 		}
-		const effectiveTreatmentId = selectedTreatment?.clinicaTratamientoId ?? specialty?.clinicaTratamientoId;
+		const effectiveTreatmentId = selectedTreatment?.clinicaTratamientoId;
 		if (!parsedNew || !newUrlSelection || !specialty || effectiveTreatmentId == null) return;
 		if (!validatePatientFields()) {
 			setConfirmOpen(false);
@@ -884,13 +898,22 @@ export default function BookingFlow({
 	}
 
 	const activeStepIndex =
-		phase === 'details' ? 4 : pickStep === 'specialty' ? 1 : pickStep === 'treatment' ? 2 : 3;
+		phase === 'details'
+		? 5
+		: pickStep === 'specialty'
+			? 1
+			: pickStep === 'area'
+				? 2
+				: pickStep === 'treatment'
+					? 3
+					: 4;
+	const centroAddress = centro ? centroAddresses?.[centro.centro]?.trim() : undefined;
 	const stepLabel = (step: number) => `${strings.stepLabelPrefix} ${String(step).padStart(2, '0')}`;
 
 	return (
 		<div class="booking-flow-shell">
-			<ol class="booking-flow__progress" aria-label="Booking steps">
-				{[1, 2, 3, 4].map((step) => (
+			<ol class="booking-flow__progress" aria-label={strings.stepsAriaLabel}>
+				{[1, 2, 3, 4, 5].map((step) => (
 					<li class={step <= activeStepIndex ? 'is-active' : undefined} key={step}>
 						<span aria-hidden="true" />
 					</li>
@@ -933,66 +956,97 @@ export default function BookingFlow({
 					</fieldset>
 				) : null}
 
-			{specialty && phase === 'pick' && pickStep === 'treatment' ? (
-				<section class="booking-flow__section booking-flow__step-fill" aria-labelledby="booking-treatment-h">
-					<div class="booking-flow__section-head">
-						<span class="booking-flow__step-kicker">{stepLabel(2)}</span>
-						<div class="booking-flow__legend-row booking-flow__legend-row--split">
-							<h2 id="booking-treatment-h" class="booking-flow__h">
-								{strings.selectTreatment}
-							</h2>
-							<p class="booking-flow__step-description booking-flow__step-description--legend">
-								{strings.treatmentStepDescription}
-							</p>
-						</div>
-					</div>
-					{treatmentsLoading ? <p>{strings.loadingSlots}</p> : null}
-					{treatmentsErr ? (
-						<div role="alert">
-							<p>{treatmentsErr}</p>
-							<button
-								type="button"
-								class="booking-flow__retry"
-								onClick={() => {
-									const ac = new AbortController();
-									void loadTreatments(specialty, ac.signal);
-								}}
-							>
-								{strings.retry}
-							</button>
-						</div>
-					) : null}
-					{!treatmentsLoading && !treatmentsErr && treatmentOptions.length === 0 ? (
-						<p class="booking-flow__banner" role="alert">
-							{strings.noSlots}
-						</p>
-					) : null}
-					{!treatmentsLoading && !treatmentsErr && treatmentOptions.length > 0 ? (
+				{specialty && phase === 'pick' && pickStep === 'area' && showAreaPicker ? (
+					<fieldset class="booking-flow__fieldset booking-flow__step-fill">
+						<legend class="booking-flow__legend booking-flow__legend--split">
+							<span class="booking-flow__step-kicker">{stepLabel(2)}</span>
+							<div class="booking-flow__legend-row">
+								<span class="booking-flow__h">{strings.selectArea}</span>
+								<span class="booking-flow__step-description booking-flow__step-description--legend">
+									{strings.areaStepDescription}
+								</span>
+							</div>
+						</legend>
 						<div class="booking-flow__scroll-region">
 							<ul class="booking-flow__list booking-flow__list--cards">
-								{treatmentOptions.map((option) => (
-									<li key={option.id}>
+								{specialty.centros.map((c) => (
+									<li key={c.centro}>
 										<button
 											type="button"
-											class={selectedTreatment?.id === option.id ? 'booking-flow__slot is-active' : 'booking-flow__slot'}
-											onClick={() => onTreatmentPick(option)}
+											class={centro?.centro === c.centro ? 'booking-flow__choice is-active' : 'booking-flow__choice'}
+											onClick={() => onCentroPick(c)}
 										>
-											{option.label}
+											{CENTROS[c.centro].labels[lang]}
 										</button>
 									</li>
 								))}
 							</ul>
 						</div>
-					) : null}
-					{showSpecialtyPicker ? (
-						<div class="booking-flow__actions">
-							<button type="button" class="booking-flow__btn-secondary" onClick={onBackToSpecialty}>
-								{strings.previous}
-							</button>
+						{showSpecialtyPicker ? (
+							<div class="booking-flow__actions">
+								<button type="button" class="booking-flow__btn-secondary" onClick={onBackToSpecialty}>
+									{strings.previous}
+								</button>
+							</div>
+						) : null}
+					</fieldset>
+				) : null}
+
+				{specialty && phase === 'pick' && pickStep === 'treatment' ? (
+					<section class="booking-flow__section booking-flow__step-fill" aria-labelledby="booking-treatment-h">
+						<div class="booking-flow__section-head">
+							<span class="booking-flow__step-kicker">{stepLabel(3)}</span>
+							<div class="booking-flow__legend-row booking-flow__legend-row--split">
+								<h2 id="booking-treatment-h" class="booking-flow__h">
+									{strings.selectTreatment}
+								</h2>
+								<p class="booking-flow__step-description booking-flow__step-description--legend">
+									{strings.treatmentStepDescription}
+								</p>
+							</div>
 						</div>
-					) : null}
-				</section>
-			) : null}
+						{treatmentOptions.length === 0 ? (
+							<p class="booking-flow__banner" role="alert">
+								{strings.noSlots}
+							</p>
+						) : (
+							<div class="booking-flow__scroll-region">
+								<ul class="booking-flow__list booking-flow__list--cards">
+									{treatmentOptions.map((option) => (
+										<li key={option.id}>
+											<button
+												type="button"
+												class={
+													selectedTreatment?.id === option.id
+														? 'booking-flow__slot booking-flow__slot--treatment is-active'
+														: 'booking-flow__slot booking-flow__slot--treatment'
+												}
+												onClick={() => onTreatmentPick(option)}
+											>
+												<span class="booking-flow__slot-label">{option.label}</span>
+												<span class="booking-flow__slot-detail">{option.detail}</span>
+											</button>
+										</li>
+									))}
+								</ul>
+							</div>
+						)}
+						<aside class="booking-flow__visit-notice" aria-label={strings.treatmentNoticeLabel}>
+							<ul class="booking-flow__visit-notice-list">
+								{strings.treatmentNotice.map((line) => (
+									<li key={line}>{line}</li>
+								))}
+							</ul>
+						</aside>
+						{showAreaPicker || showSpecialtyPicker ? (
+							<div class="booking-flow__actions">
+								<button type="button" class="booking-flow__btn-secondary" onClick={onBackFromTreatment}>
+									{strings.previous}
+								</button>
+							</div>
+						) : null}
+					</section>
+				) : null}
 
 			{specialty && phase === 'pick' && pickStep === 'datetime' ? (
 				<div class="booking-flow__datetime-step booking-flow__step-fill">
@@ -1000,7 +1054,7 @@ export default function BookingFlow({
 						class="booking-flow__section booking-flow__section--datetime booking-flow__datetime-step-main"
 						aria-labelledby="booking-days-h"
 					>
-						<span class="booking-flow__step-kicker">{stepLabel(3)}</span>
+						<span class="booking-flow__step-kicker">{stepLabel(4)}</span>
 						<div class="booking-flow__datetime-body" ref={datetimeBodyRef}>
 							{daysLoading ? <p>{strings.loadingDays}</p> : null}
 							{daysErr ? (
@@ -1015,6 +1069,7 @@ export default function BookingFlow({
 											void loadDays(
 												specialty,
 												selectedTreatment.clinicaTratamientoId,
+												selectedTreatment.areaId,
 												selectedTreatment.tipoHorario,
 												ac.signal,
 											);
@@ -1121,6 +1176,7 @@ export default function BookingFlow({
 																	void loadSlots(
 																		specialty,
 																		selectedTreatment.clinicaTratamientoId,
+																		selectedTreatment.areaId,
 																		selectedTreatment.tipoHorario,
 																		selectedDayRaw,
 																		ac.signal,
@@ -1202,7 +1258,7 @@ export default function BookingFlow({
 			{specialty && phase === 'details' && parsedNew && selectedSlot && selectedDayRaw ? (
 				<section class="booking-flow__details booking-flow__step-fill" aria-labelledby="booking-details-h">
 					<div class="booking-flow__section-head">
-						<span class="booking-flow__step-kicker">{stepLabel(4)}</span>
+						<span class="booking-flow__step-kicker">{stepLabel(5)}</span>
 						<h2 id="booking-details-h" class="booking-flow__h">
 							{strings.detailsHeading}
 						</h2>
@@ -1317,6 +1373,12 @@ export default function BookingFlow({
 										<em>{selectedTreatment?.label ?? labelFor(specialty, lang)}</em>
 									</span>
 								</p>
+								{centro ? (
+									<p class="booking-flow__summary-row">
+										<strong class="booking-flow__summary-label">{strings.areaLabel}:</strong>
+										<span class="booking-flow__summary-value">{CENTROS[centro.centro].labels[lang]}</span>
+									</p>
+								) : null}
 								<p class="booking-flow__summary-row">
 									<strong class="booking-flow__summary-label">{strings.dateLabel}:</strong>
 									<span class="booking-flow__summary-value">{summaryDateLabel(selectedDayRaw, lang)}</span>
@@ -1325,10 +1387,12 @@ export default function BookingFlow({
 									<strong class="booking-flow__summary-label">{strings.timeLabel}:</strong>
 									<span class="booking-flow__summary-value">{summaryTimeLabel(selectedSlot)}</span>
 								</p>
-								<p class="booking-flow__summary-row">
-									<strong class="booking-flow__summary-label">{strings.locationLabel}:</strong>
-									<span class="booking-flow__summary-value">{clinicAddress}</span>
-								</p>
+								{centroAddress ? (
+									<p class="booking-flow__summary-row">
+										<strong class="booking-flow__summary-label">{strings.locationLabel}:</strong>
+										<span class="booking-flow__summary-value">{centroAddress}</span>
+									</p>
+								) : null}
 							</div>
 							<div class="booking-flow__actions">
 								<button type="button" class="booking-flow__continue" onClick={onOpenConfirm}>

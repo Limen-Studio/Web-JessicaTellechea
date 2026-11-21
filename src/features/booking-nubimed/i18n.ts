@@ -19,11 +19,13 @@ type BookingStrings = {
 	parseError: string;
 	invalidResponse: string;
 	invalidPreset: string;
-	missingVendorTreatmentId: string;
 	noDays: string;
 	noSlots: string;
 	selectSpecialty: string;
 	selectTreatment: string;
+	selectArea: string;
+	areaLabel: string;
+	stepsAriaLabel: string;
 	selectDay: string;
 	selectSlot: string;
 	selectProfessional: string;
@@ -33,6 +35,10 @@ type BookingStrings = {
 	detailsHeading: string;
 	specialtyStepDescription: string;
 	treatmentStepDescription: string;
+	/** Aviso bajo las tarjetas de servicio (primera visita y tratamientos). */
+	treatmentNotice: readonly string[];
+	treatmentNoticeLabel: string;
+	areaStepDescription: string;
 	dateTimeStepDescription: string;
 	detailsStepDescription: string;
 	summaryHeading: string;
@@ -96,12 +102,13 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		parseError: 'La respuesta del proveedor no es reconocida.',
 		invalidResponse: 'Datos de disponibilidad no válidos.',
 		invalidPreset: 'La especialidad indicada no es válida. Elija una opción de la lista.',
-		missingVendorTreatmentId:
-			'Esta especialidad no tiene clinica_tratamiento_id en config.ts. Cópielo del panel Nubimed (parámetro en huecos_agenda).',
 		noDays: 'No hay días disponibles en este momento.',
 		noSlots: 'No hay franjas para este día.',
 		selectSpecialty: 'Especialidad',
 		selectTreatment: 'Servicio',
+		selectArea: 'Centro',
+		areaLabel: 'Centro',
+		stepsAriaLabel: 'Pasos de la reserva',
 		selectDay: 'Elige Día',
 		selectSlot: 'Elige Hora',
 		selectProfessional: 'Profesional',
@@ -113,6 +120,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		detailsHeading: 'Datos de la reserva',
 		specialtyStepDescription: 'Elige el área clínica que mejor se ajusta a tu objetivo.',
 		treatmentStepDescription: 'Selecciona el servicio',
+		treatmentNoticeLabel: 'Información sobre la visita',
+		treatmentNotice: [
+			'En la primera visita realizamos una valoración médica personalizada de tus necesidades y objetivos, y te proponemos un plan con distintas alternativas terapéuticas; si inicias alguno de los tratamientos propuestos, el importe de la consulta se descuenta de su precio.',
+			'El tratamiento puede realizarse el mismo día, según disponibilidad de agenda.',
+		],
+		areaStepDescription: 'Elige el centro en el que prefieres tu visita.',
 		dateTimeStepDescription: 'Primero elige fecha; después te mostraremos las horas disponibles.',
 		detailsStepDescription: 'Completa tus datos para enviar la solicitud de cita.',
 		summaryHeading: 'Resumen',
@@ -175,12 +188,13 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		parseError: 'Unrecognized response from the booking provider.',
 		invalidResponse: 'Invalid availability data.',
 		invalidPreset: 'The requested specialty is not valid. Please choose from the list.',
-		missingVendorTreatmentId:
-			'This specialty has no clinica_tratamiento_id in config.ts. Copy it from the Nubimed panel (huecos_agenda query).',
 		noDays: 'No available days at the moment.',
 		noSlots: 'No slots for this day.',
 		selectSpecialty: 'Specialty',
 		selectTreatment: 'Service',
+		selectArea: 'Centre',
+		areaLabel: 'Centre',
+		stepsAriaLabel: 'Booking steps',
 		selectDay: 'Choose day',
 		selectSlot: 'Choose time',
 		selectProfessional: 'Professional',
@@ -192,6 +206,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		detailsHeading: 'Booking details',
 		specialtyStepDescription: 'Choose the clinical area that best fits your goal.',
 		treatmentStepDescription: 'Select the service',
+		treatmentNoticeLabel: 'About your visit',
+		treatmentNotice: [
+			'At your first visit we carry out a personalised medical assessment of your needs and goals and propose a plan with several treatment options; if you go ahead with any of them, the consultation fee is deducted from the treatment price.',
+			'Treatment can take place on the same day, subject to availability.',
+		],
+		areaStepDescription: 'Choose the centre where you would like your visit.',
 		dateTimeStepDescription: 'Choose a date first; then we will show available times.',
 		detailsStepDescription: 'Complete your details to submit the booking request.',
 		summaryHeading: 'Summary',
@@ -254,12 +274,13 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		parseError: 'La resposta del proveïdor no és reconeguda.',
 		invalidResponse: 'Dades de disponibilitat no vàlides.',
 		invalidPreset: 'L’especialitat indicada no és vàlida. Trieu una opció de la llista.',
-		missingVendorTreatmentId:
-			'Aquesta especialitat no té clinica_tratamiento_id a config.ts. Copieu-lo del panell Nubimed (paràmetre a huecos_agenda).',
 		noDays: 'No hi ha dies disponibles ara mateix.',
 		noSlots: 'No hi ha franges per aquest dia.',
 		selectSpecialty: 'Especialitat',
 		selectTreatment: 'Servei',
+		selectArea: 'Centre',
+		areaLabel: 'Centre',
+		stepsAriaLabel: 'Passos de la reserva',
 		selectDay: 'Tria dia',
 		selectSlot: 'Tria hora',
 		selectProfessional: 'Professional',
@@ -271,6 +292,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		detailsHeading: 'Dades de la reserva',
 		specialtyStepDescription: 'Tria l’àrea clínica que millor s’ajusta al teu objectiu.',
 		treatmentStepDescription: 'Selecciona el servei',
+		treatmentNoticeLabel: 'Informació sobre la visita',
+		treatmentNotice: [
+			'A la primera visita fem una valoració mèdica personalitzada de les teves necessitats i objectius, i et proposem un pla amb diverses alternatives terapèutiques; si inicies algun dels tractaments proposats, l’import de la consulta es descompta del seu preu.',
+			'El tractament es pot fer el mateix dia, segons la disponibilitat de l’agenda.',
+		],
+		areaStepDescription: 'Tria el centre on prefereixes fer la visita.',
 		dateTimeStepDescription: 'Primer tria la data; després mostrarem les hores disponibles.',
 		detailsStepDescription: 'Completa les dades per enviar la sol·licitud de cita.',
 		summaryHeading: 'Resum',
@@ -333,12 +360,13 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		parseError: 'Réponse du prestataire non reconnue.',
 		invalidResponse: 'Données de disponibilité non valides.',
 		invalidPreset: 'La spécialité indiquée n’est pas valide. Choisissez une option dans la liste.',
-		missingVendorTreatmentId:
-			'Cette spécialité n’a pas de clinica_tratamiento_id dans config.ts. Copiez-le depuis le panneau Nubimed (paramètre huecos_agenda).',
 		noDays: 'Aucun jour disponible pour le moment.',
 		noSlots: 'Aucun créneau pour ce jour.',
 		selectSpecialty: 'Spécialité',
 		selectTreatment: 'Service',
+		selectArea: 'Centre',
+		areaLabel: 'Centre',
+		stepsAriaLabel: 'Étapes de la réservation',
 		selectDay: 'Choisissez le jour',
 		selectSlot: 'Choisissez l’heure',
 		selectProfessional: 'Praticien',
@@ -350,6 +378,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		detailsHeading: 'Détails de la réservation',
 		specialtyStepDescription: 'Choisissez le domaine clinique le plus adapté à votre objectif.',
 		treatmentStepDescription: 'Sélectionnez le service',
+		treatmentNoticeLabel: 'À propos de votre visite',
+		treatmentNotice: [
+			'Lors de la première visite, nous réalisons une évaluation médicale personnalisée de vos besoins et de vos objectifs, et vous proposons un plan avec plusieurs options thérapeutiques ; si vous débutez l’un des traitements proposés, le montant de la consultation est déduit de son prix.',
+			'Le traitement peut être réalisé le jour même, selon les disponibilités de l’agenda.',
+		],
+		areaStepDescription: 'Choisissez le centre où vous souhaitez être reçu(e).',
 		dateTimeStepDescription: 'Choisissez d’abord une date, puis un créneau disponible.',
 		detailsStepDescription: 'Complétez vos informations pour envoyer la demande de rendez-vous.',
 		summaryHeading: 'Résumé',

@@ -9,7 +9,7 @@ import FacialMedicalApproach from './FacialMedicalApproach.astro';
 import FacialProcess from './FacialProcess.astro';
 import FacialServices from './FacialServices.astro';
 import FacialTrust from './FacialTrust.astro';
-import { resolveBookingCta } from '../../i18n/booking-links';
+import { BOOKING_PRESET_VENDOR_MEDICINA_ESTETICA, resolveBookingCta } from '../../i18n/booking-links';
 
 interface Props {
   lang: Locale;
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const { lang, content } = Astro.props;
-const bookingCta = resolveBookingCta(lang);
+const bookingCta = resolveBookingCta(lang, { preset: BOOKING_PRESET_VENDOR_MEDICINA_ESTETICA });
 ---
 
 <div class="facial-page">

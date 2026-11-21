@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
 	readonly PUBLIC_CLINIC_ADDRESS?: string;
+	readonly PUBLIC_CLINIC_ADDRESS_BARCELONA?: string;
+	readonly PUBLIC_CLINIC_ADDRESS_EL_VENDRELL?: string;
 	readonly PUBLIC_CLINIC_PHONE?: string;
 	readonly PUBLIC_CLINIC_EMAIL?: string;
 	readonly PUBLIC_CLINIC_WEBSITE?: string;

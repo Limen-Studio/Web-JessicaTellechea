@@ -47,7 +47,12 @@ export function buildBookingSubmitBody(params: {
 		recaptchaToken,
 	} = params;
 	const profId = sel.professionalId != null ? String(sel.professionalId) : '';
-	const merged: Record<string, string> = { ...fieldDefaults };
+	/** Precedencia (AD-5): fallback fijo < runtime < hiddens scrapeados de `/new`. */
+	const merged: Record<string, string> = {
+		...NUBIMED_PORTAL_SUBMIT_FIXED_FIELDS,
+		...nubimedPortalSubmitRuntimeFields(clinicaId),
+		...fieldDefaults,
+	};
 	for (const k of NUBIMED_SUBMIT_EXCLUDED_INPUT_NAMES) {
 		delete merged[k];
 	}
@@ -57,10 +62,11 @@ export function buildBookingSubmitBody(params: {
 	merged.origen = 'cita_online';
 	merged.es_widget = 'false';
 	merged.prepago_total = 'false';
-	/** Valor sin codificar: `URLSearchParams` aplica el percent-encoding una sola vez. */
-	merged.params_tracking = buildTrackingInnerQuery(sel);
-	merged.origen_widget = 'true';
-	merged.cargar_paso_detalles = 'true';
+	/** Valor sin codificar: `URLSearchParams` aplica el percent-encoding una sola vez. El del portal prevalece. */
+	merged.params_tracking = fieldDefaults.params_tracking || buildTrackingInnerQuery(sel);
+	merged.area_seleccionada = fieldDefaults.area_seleccionada || String(sel.areaId);
+	merged.origen_widget = merged.origen_widget || 'true';
+	merged.cargar_paso_detalles = merged.cargar_paso_detalles || 'true';
 	merged.pref_hora = sel.prefHoraIso;
 	merged.pref_tratamiento = String(sel.prefTratamientoId);
 	merged.pref_users_dispo = profId;
@@ -98,8 +104,6 @@ export function buildBookingSubmitBody(params: {
 		merged.paciente_telefono_prefijo = '';
 		merged.paciente_telefono = '';
 	}
-
-	Object.assign(merged, NUBIMED_PORTAL_SUBMIT_FIXED_FIELDS, nubimedPortalSubmitRuntimeFields(clinicaId));
 
 	const q = new URLSearchParams();
 	for (const [k, v] of Object.entries(merged)) {

@@ -34,9 +34,10 @@ Public routes are **locale-first**: `/{es|en|ca|fr}/…` with a **per-locale seg
 
 ### CTA hierarchy (decided)
 
-- Primary CTA: `Solicitar valoracion`.
-- Secondary CTA 1: `Reservar cita`.
-- Secondary CTA 2: `WhatsApp`.
+- Primary CTA: `Solicitar valoracion`. With `bookingPublic` enabled (`src/i18n/site-features.ts`) it leads to the booking flow; with the flag off it falls back to WhatsApp/contact.
+- Secondary CTA 1: `Reservar cita` (booking flow, no preset when generic).
+- Secondary CTA 2: `WhatsApp` (a floating button on the home only, plus inline links).
+- Specialty-specific CTAs preselect the specialty in booking: capilar → `preset=386`, facial → `preset=3`; generic CTAs carry no preset.
 
 ### Application by page type
 
@@ -48,7 +49,7 @@ Public routes are **locale-first**: `/{es|en|ca|fr}/…` with a **per-locale seg
 ### Route visibility model
 
 - Booking route must be reachable from CTA surfaces and operational flows.
-- Booking route is intentionally excluded from main navigation to keep trust-first structure clean.
+- Booking route is intentionally excluded from main navigation to keep trust-first structure clean, and stays `noindex` and out of the sitemap even when `bookingPublic` is on.
 - Blog routes remain built in the repo but are excluded from primary nav and sitemap until `blogPublic` is enabled (`src/i18n/site-features.ts`); pages use `noindex` while deferred.
 - Corporal pillar routes remain built but are excluded from primary nav and sitemap until `corporalPublic` is enabled (`src/i18n/site-features.ts`); pages use `noindex` while deferred. Home specialties omit the corporal card when deferred.
 
