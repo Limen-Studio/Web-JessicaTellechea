@@ -9,7 +9,7 @@ export const corporalPublic = false;
 
 /**
  * Public Nubimed booking flow. `false` → booking CTAs go to WhatsApp and the booking route shows the placeholder.
- * Disabled 2026-11-24: the portal wrapper's submit fails ("Recaptcha Validation Error"; Nubimed won't authorize
- * our domain on its reCAPTCHA key). Re-enable when the `nubimed-api-booking` change (Nubimed API + BFF) ships.
+ * 2026-11-24: re-enabled with the `nubimed-api-booking` change (Nubimed API via the `/api/booking/*` BFF).
+ * Verified live by the user (decision: test in production). Rollback = set back to `false` and redeploy.
  */
-export const bookingPublic = false;
+export const bookingPublic = true;
