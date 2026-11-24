@@ -79,6 +79,21 @@ type BookingStrings = {
 	bookingLegalSummaryHeading: string;
 	bookingLegalSummaryBody: string;
 	privacyPolicyLinkLabel: string;
+	// nubimed-api-booking (Phase 6). DRAFT copy — pending user review: commentsHealthNotice, turnstileNotice,
+	// turnstileFailed, submitUnknown, submitSuccessConfirmed, submitSuccessReceived, submitGenericError.
+	fieldComments: string;
+	commentsHealthNotice: string;
+	turnstileNotice: string;
+	turnstilePolicyLinkLabel: string;
+	turnstileFailed: string;
+	slotUnavailable: string;
+	busy: string;
+	submitUnknown: string;
+	submitSuccessConfirmed: string;
+	submitSuccessReceived: string;
+	submitGenericError: string;
+	contactWhatsappLabel: string;
+	contactPageLabel: string;
 	marketingCheckbox: string;
 	/** Texto sustituto si se oculta la insignia reCAPTCHA (requisito Google). */
 	recaptchaIntro: string;
@@ -169,6 +184,28 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		bookingLegalSummaryBody:
 			'El responsable es el titular identificado en la política de privacidad. Los datos se tratan para gestionar su solicitud de cita y las comunicaciones necesarias con la clínica; base legal: medidas precontractuales a su solicitud y, en su caso, interés legítimo en la seguridad del envío. Nubimed / Clínica en la nube actúa como encargado siguiendo instrucciones del responsable.',
 		privacyPolicyLinkLabel: 'Política de privacidad (información ampliada)',
+		// DRAFT copy — pending user review
+		fieldComments: 'Comentarios (opcional)',
+		commentsHealthNotice:
+			'Indique solo lo necesario. Si incluye datos de salud, los trataremos de forma confidencial y únicamente para gestionar su cita.',
+		turnstileNotice:
+			'Este formulario está protegido por Cloudflare Turnstile para evitar envíos automáticos.',
+		turnstilePolicyLinkLabel: 'Política de privacidad de Cloudflare',
+		turnstileFailed:
+			'No se pudo cargar la verificación de seguridad. Puede reservar escribiéndonos por WhatsApp o desde la página de contacto.',
+		slotUnavailable: 'Esa hora ya no está disponible. Elija otra franja.',
+		busy:
+			'El servicio de reservas está muy solicitado. Inténtelo de nuevo en unos minutos.',
+		submitUnknown:
+			'No hemos podido confirmar si su solicitud se ha enviado. Es posible que ya se haya recibido: no la repita y contacte con la clínica por WhatsApp o teléfono.',
+		submitSuccessConfirmed:
+			'Su cita ha quedado confirmada. Le enviaremos los detalles por correo electrónico.',
+		submitSuccessReceived:
+			'Solicitud recibida. La clínica la revisará y le confirmará la cita por correo electrónico, teléfono o WhatsApp.',
+		submitGenericError:
+			'No se pudo enviar la solicitud. Inténtelo de nuevo en unos minutos o contacte con la clínica por WhatsApp o teléfono.',
+		contactWhatsappLabel: 'Escribir por WhatsApp',
+		contactPageLabel: 'Datos de contacto',
 		marketingCheckbox: 'Deseo recibir comunicaciones comerciales (opcional).',
 		recaptchaIntro: 'Este sitio está protegido por reCAPTCHA y se aplican la',
 		recaptchaPrivacyLink: 'Política de privacidad de Google',
@@ -256,6 +293,26 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		bookingLegalSummaryBody:
 			'The controller is identified in the site privacy policy. We process your data to handle your appointment request and necessary clinic communications; legal basis: pre-contractual steps at your request and, where applicable, legitimate interest in securing the submission. Nubimed / Clinica en la nube acts as a processor on the controller’s instructions.',
 		privacyPolicyLinkLabel: 'Privacy policy (full information)',
+		// DRAFT copy — pending user review
+		fieldComments: 'Comments (optional)',
+		commentsHealthNotice:
+			'Only include what is necessary. If you add health information, we will treat it confidentially and only to manage your appointment.',
+		turnstileNotice:
+			'This form is protected by Cloudflare Turnstile to prevent automated submissions.',
+		turnstilePolicyLinkLabel: 'Cloudflare privacy policy',
+		turnstileFailed:
+			'The security check could not be loaded. You can book by messaging us on WhatsApp or from the contact page.',
+		slotUnavailable: 'That time is no longer available. Please choose another slot.',
+		busy: 'The booking service is very busy. Please try again in a few minutes.',
+		submitUnknown:
+			'We could not confirm whether your request was sent. It may already have been received: please do not send it again and contact the clinic by WhatsApp or phone.',
+		submitSuccessConfirmed: 'Your appointment is confirmed. We will email you the details.',
+		submitSuccessReceived:
+			'Request received. The clinic will review it and confirm your appointment by email, phone or WhatsApp.',
+		submitGenericError:
+			'The request could not be sent. Please try again in a few minutes or contact the clinic by WhatsApp or phone.',
+		contactWhatsappLabel: 'Message us on WhatsApp',
+		contactPageLabel: 'Contact details',
 		marketingCheckbox: 'I would like to receive commercial communications (optional).',
 		recaptchaIntro: 'This site is protected by reCAPTCHA. The ',
 		recaptchaPrivacyLink: 'Google Privacy Policy',
@@ -343,6 +400,28 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		bookingLegalSummaryBody:
 			'El responsable és el titular identificat a la política de privacitat. Les dades es tracten per gestionar la sol·licitud de cita i les comunicacions necessàries amb la clínica; base legal: mesures precontractuals a la vostra sol·licitud i, si escau, interès legítim en la seguretat de l’enviament. Nubimed / Clínica en el núvol actua com a encarregat seguint instruccions del responsable.',
 		privacyPolicyLinkLabel: 'Política de privacitat (informació ampliada)',
+		// DRAFT copy — pending user review
+		fieldComments: 'Comentaris (opcional)',
+		commentsHealthNotice:
+			'Indiqueu només el necessari. Si hi incloeu dades de salut, les tractarem de forma confidencial i únicament per gestionar la cita.',
+		turnstileNotice:
+			'Aquest formulari està protegit per Cloudflare Turnstile per evitar enviaments automàtics.',
+		turnstilePolicyLinkLabel: 'Política de privacitat de Cloudflare',
+		turnstileFailed:
+			'No s’ha pogut carregar la verificació de seguretat. Podeu reservar escrivint-nos per WhatsApp o des de la pàgina de contacte.',
+		slotUnavailable: 'Aquesta hora ja no està disponible. Trieu una altra franja.',
+		busy:
+			'El servei de reserves està molt sol·licitat. Torneu-ho a intentar d’aquí a uns minuts.',
+		submitUnknown:
+			'No hem pogut confirmar si la sol·licitud s’ha enviat. És possible que ja s’hagi rebut: no la repetiu i contacteu amb la clínica per WhatsApp o telèfon.',
+		submitSuccessConfirmed:
+			'La cita ha quedat confirmada. Us n’enviarem els detalls per correu electrònic.',
+		submitSuccessReceived:
+			'Sol·licitud rebuda. La clínica la revisarà i us confirmarà la cita per correu electrònic, telèfon o WhatsApp.',
+		submitGenericError:
+			'No s’ha pogut enviar la sol·licitud. Torneu-ho a intentar d’aquí a uns minuts o contacteu amb la clínica per WhatsApp o telèfon.',
+		contactWhatsappLabel: 'Escriure per WhatsApp',
+		contactPageLabel: 'Dades de contacte',
 		marketingCheckbox: 'Vull rebre comunicacions comercials (opcional).',
 		recaptchaIntro: 'Aquest lloc està protegit per reCAPTCHA; s’apliquen la',
 		recaptchaPrivacyLink: 'Política de privacitat de Google',
@@ -430,6 +509,28 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		bookingLegalSummaryBody:
 			'Le responsable est identifié dans la politique de confidentialité. Les données sont traitées pour gérer votre demande de rendez-vous et les communications nécessaires avec la clinique ; base juridique : mesures précontractuelles à votre demande et, le cas échéant, intérêt légitime à sécuriser l’envoi. Nubimed / Clinica en la nube agit en tant que sous-traitant sur instruction du responsable.',
 		privacyPolicyLinkLabel: 'Politique de confidentialité (informations détaillées)',
+		// DRAFT copy — pending user review
+		fieldComments: 'Commentaires (facultatif)',
+		commentsHealthNotice:
+			'N’indiquez que le nécessaire. Si vous mentionnez des données de santé, elles seront traitées de manière confidentielle et uniquement pour gérer votre rendez-vous.',
+		turnstileNotice:
+			'Ce formulaire est protégé par Cloudflare Turnstile afin d’éviter les envois automatisés.',
+		turnstilePolicyLinkLabel: 'Politique de confidentialité de Cloudflare',
+		turnstileFailed:
+			'La vérification de sécurité n’a pas pu être chargée. Vous pouvez réserver en nous écrivant sur WhatsApp ou depuis la page de contact.',
+		slotUnavailable: 'Ce créneau n’est plus disponible. Veuillez en choisir un autre.',
+		busy:
+			'Le service de réservation est très sollicité. Réessayez dans quelques minutes.',
+		submitUnknown:
+			'Nous n’avons pas pu confirmer l’envoi de votre demande. Elle a peut-être déjà été reçue : ne la renvoyez pas et contactez la clinique par WhatsApp ou par téléphone.',
+		submitSuccessConfirmed:
+			'Votre rendez-vous est confirmé. Nous vous enverrons les détails par e-mail.',
+		submitSuccessReceived:
+			'Demande reçue. La clinique l’examinera et confirmera votre rendez-vous par e-mail, téléphone ou WhatsApp.',
+		submitGenericError:
+			'La demande n’a pas pu être envoyée. Réessayez dans quelques minutes ou contactez la clinique par WhatsApp ou par téléphone.',
+		contactWhatsappLabel: 'Écrire sur WhatsApp',
+		contactPageLabel: 'Coordonnées',
 		marketingCheckbox: 'Je souhaite recevoir des communications commerciales (facultatif).',
 		recaptchaIntro: 'Ce site est protégé par reCAPTCHA ; les',
 		recaptchaPrivacyLink: 'règles de confidentialité de Google',

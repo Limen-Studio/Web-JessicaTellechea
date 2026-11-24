@@ -1,0 +1,8 @@
+# Copy to .dev.vars (gitignored) for `wrangler pages dev`. Names only; never commit values.
+NUBIMED_API_EMAIL=
+NUBIMED_API_TOKEN=
+NUBIMED_CLINIC_ID=
+# Optional (default https://api.clinicaenlanube.com/api/v1, https only)
+# NUBIMED_API_BASE=
+TURNSTILE_SECRET_KEY=
+# Turnstile official test secrets: see Cloudflare docs ("Testing" page) and verify before use.

@@ -3,6 +3,12 @@
 .env.*
 !.env.example
 
+# Cloudflare Pages Functions local secrets / wrangler state
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/
+
 # Local-only notes (per project convention)
 prompts.md
 .atl
