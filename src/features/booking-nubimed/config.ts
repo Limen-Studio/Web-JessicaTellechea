@@ -1,8 +1,9 @@
 import type { SiteLocale } from './types';
-import { CLINIC_LOCATION_LABELS, type ClinicLocationKey } from '../../i18n/clinic-locations';
+import { CLINIC_LOCATION_LABELS } from '../../i18n/clinic-locations';
+import type { CentroKey, SpecialtyId } from './catalog';
 
-/** Centros = ubicaciones de la clínica (`src/i18n/clinic-locations.ts`). */
-export type CentroKey = ClinicLocationKey;
+/** Centros = ubicaciones de la clínica (`src/i18n/clinic-locations.ts`); la clave vive en `catalog.ts`. */
+export type { CentroKey };
 
 /** Centros (areas Nubimed) de la clinica 1212; etiquetas compartidas entre especialidades. */
 export const CENTROS: Record<CentroKey, { readonly labels: Record<SiteLocale, string> }> = {
@@ -12,10 +13,6 @@ export const CENTROS: Record<CentroKey, { readonly labels: Record<SiteLocale, st
 
 export interface SpecialtyCentro {
 	readonly centro: CentroKey;
-	/** `area_id` en huecos_agenda y `area` en `/new`. */
-	readonly areaId: number;
-	readonly firstVisitTreatmentId: number;
-	readonly treatmentsTreatmentId: number;
 	/** Sublinea de la tarjeta "Tratamientos" (siglas del panel Nubimed; iguales en los 4 locales). */
 	readonly treatmentsDetail: string;
 }
@@ -24,11 +21,11 @@ export interface SpecialtyCentro {
 export const FIRST_VISIT_DETAIL = '45 min. - 100€';
 
 export interface SpecialtyCatalogEntry {
-	readonly vendorId: 3 | 386;
+	/** Id de especialidad del catalogo (`catalog.ts`); el cliente nunca envia ids de agenda/servicio. */
+	readonly vendorId: SpecialtyId;
 	readonly slug: string;
 	/** Lowercase tokens for preset matching (slug, aliases, string id). */
 	readonly matchKeys: readonly string[];
-	readonly tipoHorario: 'presencial';
 	readonly labels: Record<SiteLocale, string>;
 	readonly centros: readonly SpecialtyCentro[];
 }
@@ -49,15 +46,13 @@ export const TREATMENT_KIND_LABELS: Record<'firstVisit' | 'treatments', Record<S
 };
 
 /**
- * Single source of truth for vendor specialty / area / treatment ids (REQ-3).
- * Do not duplicate these ids elsewhere as authority.
+ * Labels, aliases and card details per specialty/centro. Vendor ids live ONLY in `catalog.ts` (REQ-3).
  */
 export const SPECIALTY_CATALOG: readonly SpecialtyCatalogEntry[] = [
 	{
 		vendorId: 3,
 		slug: 'medicina-estetica',
 		matchKeys: ['medicina-estetica', 'estetica', '3'],
-		tipoHorario: 'presencial',
 		labels: {
 			es: 'Medicina estética',
 			en: 'Aesthetic medicine',
@@ -67,16 +62,10 @@ export const SPECIALTY_CATALOG: readonly SpecialtyCatalogEntry[] = [
 		centros: [
 			{
 				centro: 'barcelona',
-				areaId: 15070,
-				firstVisitTreatmentId: 389741,
-				treatmentsTreatmentId: 389745,
 				treatmentsDetail: 'BTX · FILLERS · BIOESTIMUL · IPL · PRP',
 			},
 			{
 				centro: 'el-vendrell',
-				areaId: 15072,
-				firstVisitTreatmentId: 389742,
-				treatmentsTreatmentId: 389746,
 				treatmentsDetail: 'BTX · FILLERS · BIOESTIMUL · PRP',
 			},
 		],
@@ -85,7 +74,6 @@ export const SPECIALTY_CATALOG: readonly SpecialtyCatalogEntry[] = [
 		vendorId: 386,
 		slug: 'tricologia',
 		matchKeys: ['tricologia', 'capilar', 'hair', 'medicina-capilar', '386'],
-		tipoHorario: 'presencial',
 		labels: {
 			es: 'Tricología',
 			en: 'Trichology',
@@ -95,16 +83,10 @@ export const SPECIALTY_CATALOG: readonly SpecialtyCatalogEntry[] = [
 		centros: [
 			{
 				centro: 'barcelona',
-				areaId: 15071,
-				firstVisitTreatmentId: 389743,
-				treatmentsTreatmentId: 389747,
 				treatmentsDetail: 'MESO · PRP',
 			},
 			{
 				centro: 'el-vendrell',
-				areaId: 15073,
-				firstVisitTreatmentId: 389744,
-				treatmentsTreatmentId: 389748,
 				treatmentsDetail: 'MESO · PRP',
 			},
 		],

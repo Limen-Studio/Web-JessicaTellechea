@@ -1,338 +1,145 @@
-import { buildNewUrl, type NewUrlSelection } from './build-new-url';
-import { BookingFlowError } from './types';
-import { normalizeDaysJson, normalizeSlotsJson } from './normalize-huecos';
-import type { BootstrapSession, Slot } from './types';
+import type {
+	AvailabilityResponse,
+	BookingErrorCode,
+	BookingRequestBody,
+	BookingResponse,
+} from './api-contract.ts';
+import type { CentroKey, ServiceKind, SpecialtyId } from './catalog.ts';
 
-export class GateBlockedError extends Error {
-	readonly status: number;
-	constructor(status: number, message = 'Gate blocked') {
-		super(message);
-		this.name = 'GateBlockedError';
-		this.status = status;
+/** Same-origin BFF endpoints (AD-1). The island never talks to the vendor. */
+const AVAILABILITY_PATH = '/api/booking/availability';
+const REQUEST_PATH = '/api/booking/request';
+
+const ERROR_CODES: readonly BookingErrorCode[] = [
+	'invalid',
+	'forbidden',
+	'turnstile_failed',
+	'slot_unavailable',
+	'busy',
+	'config',
+	'upstream',
+	'unknown',
+];
+
+export interface AvailabilityTarget {
+	readonly specialty: SpecialtyId;
+	readonly centro: CentroKey;
+	readonly kind: ServiceKind;
+}
+
+export class BookingApiError extends Error {
+	readonly code: BookingErrorCode;
+	readonly fields?: string[];
+	readonly retryAfter?: number;
+	constructor(code: BookingErrorCode, fields?: string[], retryAfter?: number) {
+		super(code);
+		this.name = 'BookingApiError';
+		this.code = code;
+		if (fields && fields.length > 0) this.fields = fields;
+		if (retryAfter !== undefined) this.retryAfter = retryAfter;
 	}
 }
 
-export interface NubimedClientOptions {
-	readonly baseUrl: string;
-	readonly getClinicaId: () => number;
-	readonly getCsrf: () => string | undefined;
+type FetchLike = typeof fetch;
+
+function isRecord(v: unknown): v is Record<string, unknown> {
+	return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-export interface VendorTreatmentOption {
-	readonly id: string;
-	readonly label: string;
-	readonly modalidad: string;
+function isAbort(e: unknown): boolean {
+	return typeof e === 'object' && e !== null && (e as { name?: unknown }).name === 'AbortError';
 }
 
-function joinUrl(base: string, path: string): string {
-	const b = base.replace(/\/$/, '');
-	const p = path.startsWith('/') ? path : `/${path}`;
-	return `${b}${p}`;
+function knownCode(v: unknown): BookingErrorCode | null {
+	return typeof v === 'string' && (ERROR_CODES as readonly string[]).includes(v) ? (v as BookingErrorCode) : null;
 }
 
-function assertClinicaId(id: number): void {
-	if (!id || Number.isNaN(id)) {
-		throw new BookingFlowError('invalid_response', 'Missing clinica id');
+function parseRetryAfter(res: Response): number | undefined {
+	const raw = res.headers.get('Retry-After');
+	if (raw === null) return undefined;
+	const n = Number(raw);
+	return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+async function readJson(res: Response): Promise<unknown> {
+	try {
+		return await res.json();
+	} catch {
+		return undefined;
 	}
 }
 
-function commonHeaders(csrf: string | undefined): HeadersInit {
-	const h: Record<string, string> = {
-		Accept: 'application/json, text/javascript, */*; q=0.01',
-		'X-Requested-With': 'XMLHttpRequest',
-	};
-	if (csrf) h['X-CSRF-Token'] = csrf;
-	return h;
-}
-
-/** Respuestas habituales de sesión/WAF/antibot: degradar a enlace al portal. */
-function throwOnGate(res: Response): void {
-	if ([401, 403, 419, 429, 459].includes(res.status)) {
-		throw new GateBlockedError(res.status);
-	}
-}
-
-export function createNubimedClient(opts: NubimedClientOptions) {
-	const base = opts.baseUrl.replace(/\/$/, '');
-
-	function decodeHtml(text: string): string {
-		return text
-			.replace(/&nbsp;/gi, ' ')
-			.replace(/&amp;/gi, '&')
-			.replace(/&quot;/gi, '"')
-			.replace(/&#39;/gi, "'")
-			.replace(/&lt;/gi, '<')
-			.replace(/&gt;/gi, '>');
-	}
-
-	function parseOptionAttr(rawAttrs: string, attr: string): string {
-		const re = new RegExp(`${attr}\\s*=\\s*(['"])(.*?)\\1`, 'i');
-		const m = re.exec(rawAttrs);
-		return (m?.[2] ?? '').trim();
-	}
-
-	function parseVendorTreatmentsFromHtml(html: string): VendorTreatmentOption[] {
-		const options: VendorTreatmentOption[] = [];
-		const re = /<option\b([^>]*)>([\s\S]*?)<\/option>/gi;
-		for (const match of html.matchAll(re)) {
-			const attrs = match[1] ?? '';
-			const value = parseOptionAttr(attrs, 'value');
-			if (!value) continue; // ignorar "No lo tengo claro" y opciones vacías
-			const modalidad = parseOptionAttr(attrs, 'data-modalidad') || 'presencial';
-			const rawLabel = decodeHtml((match[2] ?? '').replace(/\s+/g, ' ').trim());
-			if (!rawLabel) continue;
-			options.push({ id: value, label: rawLabel, modalidad });
+/** Maps an error body to `BookingApiError`; any unrecognised shape falls back to `fallback`. */
+function toApiError(res: Response, data: unknown, fallback: BookingErrorCode): BookingApiError {
+	if (isRecord(data) && data.ok === false) {
+		const code = knownCode(data.code);
+		if (code) {
+			const fields = Array.isArray(data.fields)
+				? data.fields.filter((f): f is string => typeof f === 'string')
+				: undefined;
+			return new BookingApiError(code, fields, parseRetryAfter(res));
 		}
-		return options;
 	}
+	return new BookingApiError(fallback);
+}
 
-	async function fetchBootstrapHtml(signal: AbortSignal): Promise<string> {
-		const id = opts.getClinicaId();
-		assertClinicaId(id);
-		const url = joinUrl(base, `/clinicas/${id}/cita_peticiones/widget`);
-		const res = await fetch(url, {
+export function availabilityUrl(target: AvailabilityTarget): string {
+	const q = new URLSearchParams({
+		specialty: String(target.specialty),
+		centro: target.centro,
+		kind: target.kind,
+	});
+	return `${AVAILABILITY_PATH}?${q.toString()}`;
+}
+
+function isAvailability(v: unknown): v is AvailabilityResponse {
+	if (!isRecord(v) || v.ok !== true) return false;
+	if (typeof v.from !== 'string' || typeof v.to !== 'string' || !isRecord(v.days)) return false;
+	return Object.values(v.days).every((d) => Array.isArray(d) && d.every((s) => typeof s === 'string'));
+}
+
+/** One availability load per (specialty, centro, kind). Network/JSON failure => `upstream`. */
+export async function fetchAvailability(
+	signal: AbortSignal,
+	target: AvailabilityTarget,
+	fetchImpl: FetchLike = fetch,
+): Promise<AvailabilityResponse> {
+	let res: Response;
+	try {
+		res = await fetchImpl(availabilityUrl(target), { method: 'GET', signal, headers: { Accept: 'application/json' } });
+	} catch (e) {
+		if (isAbort(e)) throw e;
+		throw new BookingApiError('upstream');
+	}
+	const data = await readJson(res);
+	if (res.ok && isAvailability(data)) return data;
+	throw toApiError(res, data, 'upstream');
+}
+
+/**
+ * Single POST, never retried. Network failure or unreadable response => `unknown`:
+ * the request may have reached the server, so the UI must not invite a resend.
+ */
+export async function submitBookingRequest(
+	signal: AbortSignal,
+	body: BookingRequestBody,
+	fetchImpl: FetchLike = fetch,
+): Promise<BookingResponse> {
+	let res: Response;
+	try {
+		res = await fetchImpl(REQUEST_PATH, {
+			method: 'POST',
 			signal,
-			credentials: 'include',
-			headers: {
-				Accept: 'text/html,application/xhtml+xml',
-				'X-Requested-With': 'XMLHttpRequest',
-			},
+			headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+			body: JSON.stringify(body),
 		});
-		throwOnGate(res);
-		if (!res.ok) {
-			throw new BookingFlowError('network', `Widget HTTP ${res.status}`);
-		}
-		return res.text();
+	} catch (e) {
+		if (isAbort(e)) throw e;
+		throw new BookingApiError('unknown');
 	}
-
-	async function fetchTreatmentsBySpecialty(
-		signal: AbortSignal,
-		params: { locale: string; especialidadId: number; areaId: number },
-	): Promise<VendorTreatmentOption[]> {
-		const id = opts.getClinicaId();
-		assertClinicaId(id);
-		const q = new URLSearchParams();
-		q.set('locale', params.locale);
-		q.set('clinica_id', String(id));
-		q.set('especialidad_id', String(params.especialidadId));
-		q.set('area_id', String(params.areaId));
-		const url = joinUrl(base, `/ajax/obtener_clinica_tratamientos?${q.toString()}`);
-		const res = await fetch(url, {
-			signal,
-			credentials: 'include',
-			headers: {
-				Accept: 'text/html, */*; q=0.01',
-				'X-Requested-With': 'XMLHttpRequest',
-			},
-		});
-		throwOnGate(res);
-		if (!res.ok) {
-			throw new BookingFlowError('network', `Treatments HTTP ${res.status}`);
-		}
-		const html = await res.text();
-		return parseVendorTreatmentsFromHtml(html);
+	const data = await readJson(res);
+	if (res.ok && isRecord(data) && data.ok === true && (data.status === 'confirmed' || data.status === 'received')) {
+		return { ok: true, status: data.status };
 	}
-
-	function huecosUrl(pathSuffix: string, search: URLSearchParams): string {
-		const id = opts.getClinicaId();
-		assertClinicaId(id);
-		const path = `/clinicas/${id}/cita_peticiones/${pathSuffix}?${search.toString()}`;
-		return joinUrl(base, path);
-	}
-
-	/** Query string alineada al portal (widget / huecos_agenda). */
-	function buildHuecosAgendaParams(p: {
-		locale: string;
-		especialidadId: number;
-		clinicaTratamientoId: number;
-		areaId: number;
-		diaSeleccionado: string;
-		tipoHorario: string;
-	}): URLSearchParams {
-		const q = new URLSearchParams();
-		q.set('locale', p.locale);
-		q.set('role_id', 'undefined');
-		q.set('especialidad_id', String(p.especialidadId));
-		q.set('dia_seleccionado', p.diaSeleccionado);
-		q.set('clinica_tratamiento_id', String(p.clinicaTratamientoId));
-		q.set('clinica_mutua_id', '');
-		q.set('area_id', String(p.areaId));
-		q.set('tipo_horario', p.tipoHorario);
-		return q;
-	}
-
-	function assertHuecosPayload(data: unknown): void {
-		if (Array.isArray(data)) return;
-		if (data && typeof data === 'object') {
-			const msg = (data as Record<string, unknown>).message;
-			if (typeof msg === 'string') {
-				throw new BookingFlowError('invalid_response', msg);
-			}
-		}
-	}
-
-	/** Lista de dias: `dia_seleccionado` vacio. */
-	async function fetchDaysJson(
-		signal: AbortSignal,
-		params: {
-			locale: string;
-			especialidadId: number;
-			clinicaTratamientoId: number;
-			areaId: number;
-			tipoHorario: string;
-		},
-	): Promise<unknown> {
-		const q = buildHuecosAgendaParams({
-			locale: params.locale,
-			especialidadId: params.especialidadId,
-			clinicaTratamientoId: params.clinicaTratamientoId,
-			areaId: params.areaId,
-			diaSeleccionado: '',
-			tipoHorario: params.tipoHorario,
-		});
-		const url = huecosUrl('huecos_agenda', q);
-		const res = await fetch(url, {
-			signal,
-			credentials: 'include',
-			headers: commonHeaders(opts.getCsrf()),
-		});
-		throwOnGate(res);
-		if (!res.ok) {
-			throw new BookingFlowError('network', `Huecos HTTP ${res.status}`);
-		}
-		const ct = res.headers.get('content-type') ?? '';
-		let data: unknown;
-		if (!ct.includes('json')) {
-			const text = await res.text();
-			if (text.length < 20) {
-				throw new BookingFlowError('invalid_response', 'Non-JSON huecos response');
-			}
-			try {
-				data = JSON.parse(text) as unknown;
-			} catch {
-				throw new BookingFlowError('invalid_response', 'Invalid JSON in huecos response');
-			}
-		} else {
-			data = await res.json();
-		}
-		assertHuecosPayload(data);
-		return data;
-	}
-
-	/** Franjas del dia (`dia_seleccionado` DD/MM/YYYY). */
-	async function fetchSlotsJson(
-		signal: AbortSignal,
-		params: {
-			locale: string;
-			especialidadId: number;
-			diaDDMMYYYY: string;
-			clinicaTratamientoId: number;
-			areaId: number;
-			tipoHorario: string;
-		},
-	): Promise<unknown> {
-		const q = buildHuecosAgendaParams({
-			locale: params.locale,
-			especialidadId: params.especialidadId,
-			clinicaTratamientoId: params.clinicaTratamientoId,
-			areaId: params.areaId,
-			diaSeleccionado: params.diaDDMMYYYY,
-			tipoHorario: params.tipoHorario,
-		});
-		const url = huecosUrl('huecos_agenda', q);
-		const res = await fetch(url, {
-			signal,
-			credentials: 'include',
-			headers: commonHeaders(opts.getCsrf()),
-		});
-		throwOnGate(res);
-		if (!res.ok) {
-			throw new BookingFlowError('network', `Huecos (slots) HTTP ${res.status}`);
-		}
-		const data = await res.json();
-		assertHuecosPayload(data);
-		return data;
-	}
-
-	return {
-		fetchBootstrapHtml,
-		fetchTreatmentsBySpecialty,
-		async fetchDayStrings(
-			signal: AbortSignal,
-			p: {
-				locale: string;
-				especialidadId: number;
-				clinicaTratamientoId: number;
-				areaId: number;
-				tipoHorario: string;
-			},
-		): Promise<string[]> {
-			const json = await fetchDaysJson(signal, p);
-			return normalizeDaysJson(json);
-		},
-		async fetchSlots(
-			signal: AbortSignal,
-			p: {
-				locale: string;
-				especialidadId: number;
-				diaDDMMYYYY: string;
-				clinicaTratamientoId: number;
-				areaId: number;
-				tipoHorario: string;
-			},
-		): Promise<Slot[]> {
-			const json = await fetchSlotsJson(signal, p);
-			return normalizeSlotsJson(json);
-		},
-
-		async fetchNewBookingPageHtml(
-			signal: AbortSignal,
-			bootstrap: BootstrapSession,
-			sel: NewUrlSelection,
-		): Promise<string> {
-			const url = buildNewUrl(base, bootstrap, sel);
-			const res = await fetch(url, {
-				signal,
-				credentials: 'include',
-				headers: {
-					Accept: 'text/html,application/xhtml+xml',
-					'X-Requested-With': 'XMLHttpRequest',
-					...(opts.getCsrf() ? { 'X-CSRF-Token': opts.getCsrf()! } : {}),
-				},
-			});
-			throwOnGate(res);
-			if (!res.ok) {
-				throw new BookingFlowError('network', `Pagina /new HTTP ${res.status}`);
-			}
-			return res.text();
-		},
-
-		async submitCitaPeticion(
-			signal: AbortSignal,
-			p: { actionPath: string; body: URLSearchParams },
-		): Promise<Response> {
-			const path = p.actionPath.startsWith('/') ? p.actionPath : `/${p.actionPath}`;
-			const url = joinUrl(base, path);
-			const token = p.body.get('authenticity_token') ?? undefined;
-			const res = await fetch(url, {
-				method: 'POST',
-				signal,
-				credentials: 'include',
-				headers: {
-					Accept: 'application/json, text/javascript, */*; q=0.01',
-					'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-					...commonHeaders(token),
-				},
-				body: p.body.toString(),
-			});
-			throwOnGate(res);
-			return res;
-		},
-
-		resolveBaseUrl(): string {
-			return base;
-		},
-	};
+	throw toApiError(res, data, 'unknown');
 }
-
-export type NubimedClient = ReturnType<typeof createNubimedClient>;

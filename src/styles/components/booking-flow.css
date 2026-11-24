@@ -782,6 +782,30 @@
 	outline: none;
 }
 
+.booking-flow__input.is-invalid {
+	border-bottom-color: var(--color-danger);
+}
+
+.booking-flow__textarea {
+	resize: vertical;
+	min-height: 4.5rem;
+}
+
+.booking-flow__field-hint {
+	font-size: 0.75rem;
+	line-height: 1.4;
+	color: var(--color-muted);
+}
+
+/* Honeypot: fuera de pantalla (no display:none, para que los bots lo rellenen). */
+.booking-flow__hp {
+	position: absolute;
+	left: -9999px;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+}
+
 .booking-flow__input:focus-visible {
 	outline: 2px solid var(--color-champagne);
 	outline-offset: 4px;
@@ -967,7 +991,7 @@
 	margin-bottom: 0;
 }
 
-.booking-flow__recaptcha-wrap {
+.booking-flow__captcha-wrap {
 	margin-top: var(--space-md);
 	padding-top: var(--space-md);
 	border-top: 1px solid var(--color-border);
@@ -987,25 +1011,30 @@
 	margin: 0 0 var(--space-md);
 }
 
-body .grecaptcha-badge {
-	visibility: hidden !important;
-	opacity: 0 !important;
-	pointer-events: none !important;
-	width: 0 !important;
-	height: 0 !important;
-	overflow: hidden !important;
-	position: fixed !important;
-	right: 0 !important;
-	bottom: 0 !important;
+.booking-flow__captcha-widget:empty {
+	display: none;
 }
 
-.booking-flow__recaptcha-disclosure {
+.booking-flow__captcha-widget {
+	margin-bottom: var(--space-sm);
+}
+
+.booking-flow__captcha-fallback {
+	margin: var(--space-sm) 0 0;
+	font-size: 0.875rem;
+}
+
+.booking-flow__captcha-fallback a {
+	color: var(--color-accent);
+}
+
+.booking-flow__captcha-disclosure {
 	font-size: 0.75rem;
 	line-height: 1.45;
 	margin: var(--space-sm) 0 0;
 }
 
-.booking-flow__recaptcha-disclosure a {
+.booking-flow__captcha-disclosure a {
 	color: var(--color-accent);
 }
 

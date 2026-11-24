@@ -10,6 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "node --max-old-space-size=8192 ./node_modules/astro/bin/astro.mjs check",
+    "test:unit": "node --experimental-strip-types --test tests/unit/*.test.ts",
     "lint:encoding": "node scripts/check-utf8.mjs",
     "verify:routes": "node scripts/verify-route-registry.mjs",
     "align:before-after": "python scripts/align-before-after.py",
