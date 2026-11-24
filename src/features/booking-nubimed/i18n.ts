@@ -91,6 +91,10 @@ type BookingStrings = {
 	submitUnknown: string;
 	submitSuccessConfirmed: string;
 	submitSuccessReceived: string;
+	successTitleConfirmed: string;
+	successTitleReceived: string;
+	successHelp: string;
+	backToHome: string;
 	submitGenericError: string;
 	contactWhatsappLabel: string;
 	contactPageLabel: string;
@@ -198,10 +202,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 			'El servicio de reservas está muy solicitado. Inténtelo de nuevo en unos minutos.',
 		submitUnknown:
 			'No hemos podido confirmar si su solicitud se ha enviado. Es posible que ya se haya recibido: no la repita y contacte con la clínica por WhatsApp o teléfono.',
-		submitSuccessConfirmed:
-			'Su cita ha quedado confirmada. Le enviaremos los detalles por correo electrónico.',
-		submitSuccessReceived:
-			'Solicitud recibida. La clínica la revisará y le confirmará la cita por correo electrónico, teléfono o WhatsApp.',
+		submitSuccessConfirmed: 'Su cita ha quedado confirmada. Le enviaremos los detalles por correo electrónico.',
+		submitSuccessReceived: 'Su solicitud se ha registrado correctamente. Recibirá la confirmación por correo electrónico.',
+		successTitleConfirmed: 'Cita confirmada',
+		successTitleReceived: 'Solicitud registrada con éxito',
+		successHelp: '¿Algún imprevisto con su cita?',
+		backToHome: 'Volver al inicio',
 		submitGenericError:
 			'No se pudo enviar la solicitud. Inténtelo de nuevo en unos minutos o contacte con la clínica por WhatsApp o teléfono.',
 		contactWhatsappLabel: 'Escribir por WhatsApp',
@@ -307,8 +313,11 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 		submitUnknown:
 			'We could not confirm whether your request was sent. It may already have been received: please do not send it again and contact the clinic by WhatsApp or phone.',
 		submitSuccessConfirmed: 'Your appointment is confirmed. We will email you the details.',
-		submitSuccessReceived:
-			'Request received. The clinic will review it and confirm your appointment by email, phone or WhatsApp.',
+		submitSuccessReceived: 'Your request has been registered successfully. You will receive the confirmation by email.',
+		successTitleConfirmed: 'Appointment confirmed',
+		successTitleReceived: 'Request registered successfully',
+		successHelp: 'Anything unexpected with your appointment?',
+		backToHome: 'Back to home',
 		submitGenericError:
 			'The request could not be sent. Please try again in a few minutes or contact the clinic by WhatsApp or phone.',
 		contactWhatsappLabel: 'Message us on WhatsApp',
@@ -414,10 +423,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 			'El servei de reserves està molt sol·licitat. Torneu-ho a intentar d’aquí a uns minuts.',
 		submitUnknown:
 			'No hem pogut confirmar si la sol·licitud s’ha enviat. És possible que ja s’hagi rebut: no la repetiu i contacteu amb la clínica per WhatsApp o telèfon.',
-		submitSuccessConfirmed:
-			'La cita ha quedat confirmada. Us n’enviarem els detalls per correu electrònic.',
-		submitSuccessReceived:
-			'Sol·licitud rebuda. La clínica la revisarà i us confirmarà la cita per correu electrònic, telèfon o WhatsApp.',
+		submitSuccessConfirmed: 'La seva cita ha quedat confirmada. Li enviarem els detalls per correu electrònic.',
+		submitSuccessReceived: 'La seva sol·licitud s’ha registrat correctament. Rebrà la confirmació per correu electrònic.',
+		successTitleConfirmed: 'Cita confirmada',
+		successTitleReceived: 'Sol·licitud registrada correctament',
+		successHelp: 'Algun imprevist amb la seva cita?',
+		backToHome: 'Tornar a l’inici',
 		submitGenericError:
 			'No s’ha pogut enviar la sol·licitud. Torneu-ho a intentar d’aquí a uns minuts o contacteu amb la clínica per WhatsApp o telèfon.',
 		contactWhatsappLabel: 'Escriure per WhatsApp',
@@ -523,10 +534,12 @@ const STRINGS: Record<SiteLocale, BookingStrings> = {
 			'Le service de réservation est très sollicité. Réessayez dans quelques minutes.',
 		submitUnknown:
 			'Nous n’avons pas pu confirmer l’envoi de votre demande. Elle a peut-être déjà été reçue : ne la renvoyez pas et contactez la clinique par WhatsApp ou par téléphone.',
-		submitSuccessConfirmed:
-			'Votre rendez-vous est confirmé. Nous vous enverrons les détails par e-mail.',
-		submitSuccessReceived:
-			'Demande reçue. La clinique l’examinera et confirmera votre rendez-vous par e-mail, téléphone ou WhatsApp.',
+		submitSuccessConfirmed: 'Votre rendez-vous est confirmé. Nous vous enverrons les détails par e-mail.',
+		submitSuccessReceived: 'Votre demande a bien été enregistrée. Vous recevrez la confirmation par e-mail.',
+		successTitleConfirmed: 'Rendez-vous confirmé',
+		successTitleReceived: 'Demande enregistrée avec succès',
+		successHelp: 'Un imprévu concernant votre rendez-vous ?',
+		backToHome: 'Retour à l’accueil',
 		submitGenericError:
 			'La demande n’a pas pu être envoyée. Réessayez dans quelques minutes ou contactez la clinique par WhatsApp ou par téléphone.',
 		contactWhatsappLabel: 'Écrire sur WhatsApp',
