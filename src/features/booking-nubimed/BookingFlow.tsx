@@ -482,30 +482,6 @@ export default function BookingFlow({
 		setPickStep('treatment');
 	};
 
-	const resetAfterSuccess = () => {
-		setPhase('pick');
-		setPickStep(initialPickStep);
-		setCentro(sedeEntry ?? null);
-		setConfirmOpen(false);
-		setSelectedTreatment(null);
-		clearDateSelection();
-		setAvailability(null);
-		loadedKeyRef.current = null;
-		setPrivacyOk(false);
-		setValidationErr(null);
-		setInvalidFields([]);
-		setSubmitErr(null);
-		setShowContactFallback(false);
-		setUnknownSent(false);
-		setNpNombre('');
-		setNpApellidos('');
-		setNpPrefijo('34');
-		setNpTel('');
-		setNpEmail('');
-		setComments('');
-		setWebsite('');
-	};
-
 	const onBackFromDetails = () => {
 		setPhase('pick');
 		setPickStep('datetime');
@@ -645,14 +621,69 @@ export default function BookingFlow({
 	};
 
 	if (phase === 'success') {
+		const confirmed = successStatus === 'confirmed';
+		const successLoc = centro ? centroLocations?.[centro.centro] : undefined;
+		const successAddress = successLoc ? successLoc.address.replace(/\n/g, ', ') : '';
 		return (
-			<div class="booking-flow booking-flow--success" role="status">
+			<div class="booking-flow booking-flow--success" role="status" aria-live="polite">
+				<i class="ph-thin ph-check-circle booking-flow__success-icon" aria-hidden="true"></i>
+				<h2 class="booking-flow__h booking-flow__success-title">
+					{confirmed ? strings.successTitleConfirmed : strings.successTitleReceived}
+				</h2>
 				<p class="booking-flow__success-msg">
-					{successStatus === 'confirmed' ? strings.submitSuccessConfirmed : strings.submitSuccessReceived}
+					{confirmed ? strings.submitSuccessConfirmed : strings.submitSuccessReceived}
 				</p>
-				<button type="button" class="booking-flow__continue" onClick={resetAfterSuccess}>
-					{strings.backToSlots}
-				</button>
+				{specialty && selectedTreatment && selectedDay && selectedSlotIso ? (
+					<div class="booking-flow__success-summary">
+						<p class="booking-flow__summary-row">
+							<strong class="booking-flow__summary-label">{strings.serviceLabel}:</strong>
+							<span class="booking-flow__summary-value">
+								{labelFor(specialty, lang)} · {selectedTreatment.label}
+							</span>
+						</p>
+						{centro ? (
+							<p class="booking-flow__summary-row">
+								<strong class="booking-flow__summary-label">{strings.areaLabel}:</strong>
+								<span class="booking-flow__summary-value">{CENTROS[centro.centro].labels[lang]}</span>
+							</p>
+						) : null}
+						<p class="booking-flow__summary-row">
+							<strong class="booking-flow__summary-label">{strings.dateLabel}:</strong>
+							<span class="booking-flow__summary-value">
+								{summaryDateLabel(selectedDay, lang)} · {formatSlotTime(selectedSlotIso)}
+							</span>
+						</p>
+						{successLoc ? (
+							<p class="booking-flow__summary-row">
+								<strong class="booking-flow__summary-label">{strings.locationLabel}:</strong>
+								<span class="booking-flow__summary-value">
+									<a
+										class="booking-flow__summary-link"
+										href={successLoc.mapsHref}
+										target="_blank"
+										rel="noopener noreferrer"
+										aria-label={`${successAddress} — ${strings.openInMaps}`}
+									>
+										{successAddress}
+									</a>
+								</span>
+							</p>
+						) : null}
+					</div>
+				) : null}
+				<p class="booking-flow__success-help">
+					{strings.successHelp}{' '}
+					{whatsappHref ? (
+						<a href={whatsappHref} target="_blank" rel="noopener noreferrer">
+							{strings.contactWhatsappLabel}
+						</a>
+					) : (
+						<a href={href(lang, 'contact')}>{strings.contactPageLabel}</a>
+					)}
+				</p>
+				<a class="booking-flow__success-home" href={href(lang, 'home')}>
+					{strings.backToHome}
+				</a>
 			</div>
 		);
 	}
@@ -1157,7 +1188,7 @@ export default function BookingFlow({
 								</a>
 							</p>
 						</div>
-						<label class="booking-flow__choice booking-flow__privacy">
+						<label class="booking-flow__privacy">
 							<input type="checkbox" checked={privacyOk} onChange={(e) => setPrivacyOk((e.target as HTMLInputElement).checked)} />
 							<span>{strings.privacyCheckbox}</span>
 						</label>
