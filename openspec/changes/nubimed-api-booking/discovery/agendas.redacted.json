@@ -1,0 +1,134 @@
+﻿[
+    {
+        "id":  26912,
+        "professional_id":  21022,
+        "professional_name":  "Dra. Jessica Tellechea",
+        "center_id":  1212,
+        "center_name":  "Dra. Jessica Tellechea",
+        "center_address":  "Av central 4, 43820 Calafell",
+        "center_phone":  "696807313",
+        "specialties":  [
+                            [
+                                "3",
+                                "Medicina Estética"
+                            ],
+                            [
+                                "386",
+                                "Tricología"
+                            ]
+                        ],
+        "services":  [
+                         {
+                             "id":  389744,
+                             "speciality_id":  "386",
+                             "description":  "Primera Visita (45min, 100€)",
+                             "duration":  45,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         },
+                         {
+                             "id":  389742,
+                             "speciality_id":  "3",
+                             "description":  "Primera Visita (45min, 100€)",
+                             "duration":  45,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         },
+                         {
+                             "id":  389746,
+                             "speciality_id":  "3",
+                             "description":  "Tratamientos (BTX, FILLERS, BIOESTIMUL, PRP)",
+                             "duration":  30,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         },
+                         {
+                             "id":  389748,
+                             "speciality_id":  "386",
+                             "description":  "Tratamientos (MESO, PRP)",
+                             "duration":  30,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         }
+                     ],
+        "accepted_visit_type":  "private_only"
+    },
+    {
+        "id":  29537,
+        "professional_id":  23184,
+        "professional_name":  "Dra. Jessica Tellechea (BCN)",
+        "center_id":  1212,
+        "center_name":  "Dra. Jessica Tellechea",
+        "center_address":  "Av central 4, 43820 Calafell",
+        "center_phone":  "696807313",
+        "specialties":  [
+                            [
+                                "3",
+                                "Medicina Estética"
+                            ],
+                            [
+                                "386",
+                                "Tricología"
+                            ]
+                        ],
+        "services":  [
+                         {
+                             "id":  389743,
+                             "speciality_id":  "386",
+                             "description":  "Primera Visita (45min, 100€)",
+                             "duration":  45,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         },
+                         {
+                             "id":  389741,
+                             "speciality_id":  "3",
+                             "description":  "Primera Visita (45min, 100€)",
+                             "duration":  45,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         },
+                         {
+                             "id":  389745,
+                             "speciality_id":  "3",
+                             "description":  "Tratamientos (BTX, FILLERS, BIOESTIMUL, IPL, PRP)",
+                             "duration":  30,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         },
+                         {
+                             "id":  389747,
+                             "speciality_id":  "386",
+                             "description":  "Tratamientos (MESO, PRP)",
+                             "duration":  30,
+                             "modality":  "presencial",
+                             "mutualities":  [
+
+                                             ],
+                             "rooms":  null
+                         }
+                     ],
+        "accepted_visit_type":  "private_and_insurance"
+    }
+]
