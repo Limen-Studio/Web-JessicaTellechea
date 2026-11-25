@@ -801,7 +801,10 @@ export default function BookingFlow({
 				) : null}
 
 				{specialty && phase === 'pick' && pickStep === 'treatment' ? (
-					<section class="booking-flow__section booking-flow__step-fill" aria-labelledby="booking-treatment-h">
+					<section
+						class="booking-flow__section booking-flow__step-fill booking-flow__section--treatment"
+						aria-labelledby="booking-treatment-h"
+					>
 						<div class="booking-flow__section-head">
 							<span class="booking-flow__step-kicker">{stepLabel(3)}</span>
 							<div class="booking-flow__legend-row booking-flow__legend-row--split">

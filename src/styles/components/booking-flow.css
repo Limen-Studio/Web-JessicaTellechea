@@ -330,6 +330,30 @@
 	color: color-mix(in srgb, var(--color-champagne) 55%, var(--color-text));
 }
 
+/**
+ * Paso Servicio: las tarjetas nunca se aplastan (antes `flex: 1` + `min-height: 0` las dejaba en 0 px en
+ * móvil cuando el aviso no cabía). Si el contenido no entra en el viewport fijo, el paso hace scroll; si
+ * sobra espacio, el aviso se empuja al pie con `margin-top: auto`.
+ */
+.booking-flow__section--treatment.booking-flow__step-fill {
+	overflow-y: auto;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+.booking-flow__section--treatment .booking-flow__scroll-region {
+	flex: 0 0 auto;
+	overflow: visible;
+}
+
+.booking-flow__section--treatment .booking-flow__visit-notice {
+	margin-top: auto;
+}
+
+.booking-flow__section--treatment .booking-flow__actions {
+	flex: 0 0 auto;
+}
+
 /** Aviso editorial al pie del paso Servicio (sobre "Anterior"): filete dorado, fondo apenas cálido. */
 .booking-flow__visit-notice {
 	flex: 0 0 auto;
@@ -872,6 +896,18 @@
 	.booking-flow {
 		/** ~80px más de alto que el viewport base en escritorio (más aire en pasos). */
 		--booking-flow-step-viewport-height: calc(min(clamp(26rem, 62vmin, 36rem), 85vh) - 50px + 80px);
+	}
+
+	/** Aviso del paso Servicio más compacto en móvil (menos scroll antes de "Anterior"). */
+	.booking-flow__visit-notice {
+		margin-top: var(--space-sm);
+		margin-bottom: var(--space-sm);
+		padding: var(--space-sm) var(--space-sm) var(--space-sm) calc(var(--space-sm) + 2px);
+	}
+
+	.booking-flow__visit-notice-list li {
+		font-size: 0.8rem;
+		line-height: 1.55;
 	}
 
 	/**
