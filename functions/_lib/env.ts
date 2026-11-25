@@ -9,6 +9,13 @@ export interface BookingEnv {
 	NUBIMED_CLINIC_ID?: string;
 	NUBIMED_API_BASE?: string;
 	TURNSTILE_SECRET_KEY?: string;
+	/** Optional booking notification (never part of `readConfig`; absence never causes 503). */
+	CF_ACCOUNT_ID?: string;
+	CF_EMAIL_API_TOKEN?: string;
+	BOOKING_NOTIFY_TO?: string;
+	BOOKING_NOTIFY_FROM?: string;
+	NUBIMED_PANEL_URL?: string;
+	BOOKING_NOTIFY_ON?: string;
 }
 
 export interface BookingContext {

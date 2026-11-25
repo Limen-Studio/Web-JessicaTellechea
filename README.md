@@ -128,6 +128,7 @@ Opcional: `--debug ruta/blend-debug.jpg` (mezcla 50/50); `--y-bottom-pct 46`; `-
 - Connect the repo to Cloudflare Pages: build command `npm run build`, output directory `dist`. `functions/` is deployed automatically.
 - Set every `PUBLIC_*` used at build (including `PUBLIC_CLINIC_ADDRESS_BARCELONA` and `PUBLIC_CLINIC_ADDRESS_EL_VENDRELL`) in the Cloudflare **build** env, and `PUBLIC_NUBIMED_CLINICA_ID` (required) / `PUBLIC_NUBIMED_VENDOR_ORIGIN` (optional) as Function **runtime** variables in the dashboard.
 - Local test of the proxy: `npm run build`, then `npx wrangler pages dev dist --binding PUBLIC_NUBIMED_CLINICA_ID=1212`.
+- Optional booking notification email (Cloudflare Email Sending, beta): set as Function **runtime** values in Pages (Production and Preview) `CF_EMAIL_API_TOKEN` and `BOOKING_NOTIFY_TO` as secrets, and `CF_ACCOUNT_ID`, `BOOKING_NOTIFY_FROM` (plus optional `NUBIMED_PANEL_URL`, `BOOKING_NOTIFY_ON`) as variables. Onboard the sending domain in Email Sending, verify the doctor's address as a destination, and create a token with only `Email Sending Write`. If any required value is missing the feature is off (no error, booking unaffected). Rollback: `BOOKING_NOTIFY_ON=none`, or delete `CF_EMAIL_API_TOKEN`, then redeploy.
 - Booking is gated by `bookingPublic` in `src/i18n/site-features.ts`.
 
 Official docs: [https://docs.astro.build](https://docs.astro.build) · Community: [https://astro.build/chat](https://astro.build/chat).

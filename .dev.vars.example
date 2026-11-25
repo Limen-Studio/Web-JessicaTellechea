@@ -6,3 +6,12 @@ NUBIMED_CLINIC_ID=
 # NUBIMED_API_BASE=
 TURNSTILE_SECRET_KEY=
 # Turnstile official test secrets: see Cloudflare docs ("Testing" page) and verify before use.
+
+# Optional: booking notification email to the doctor (Cloudflare Email Sending). Names only.
+# If any of the four required ones is missing/malformed the notification is silently disabled.
+# CF_ACCOUNT_ID=
+# CF_EMAIL_API_TOKEN=
+# BOOKING_NOTIFY_TO=
+# BOOKING_NOTIFY_FROM=
+# NUBIMED_PANEL_URL=
+# BOOKING_NOTIFY_ON=

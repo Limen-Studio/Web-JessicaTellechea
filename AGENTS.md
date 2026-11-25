@@ -91,6 +91,7 @@ Full human index: README, section **Document map**. Some titles there may not ex
 - **Content:** copy in `src/i18n/*`; blog in `src/content/blog/` via `src/content.config.ts`.
 - **Host:** **Cloudflare Pages** (git deploy). The site is still a **static** `astro build` → `dist/` (no SSR, no Astro adapter).
 - **Only server code:** the same-origin Nubimed proxy `functions/__nubimed-proxy/[[path]].ts` (Pages Function, allowlisted routes, no body logging). It is the single sanctioned exception; no other BFF or backend. Runtime env (Cloudflare dashboard): `PUBLIC_NUBIMED_CLINICA_ID` (required), `PUBLIC_NUBIMED_VENDOR_ORIGIN` (optional). Every `PUBLIC_*` used at build must also be set in the Cloudflare build env.
+- **Booking notification (optional email to the doctor):** Function runtime env, never `PUBLIC_*`. Secrets: `CF_EMAIL_API_TOKEN`, `BOOKING_NOTIFY_TO`. Variables: `CF_ACCOUNT_ID`, `BOOKING_NOTIFY_FROM`, optional `NUBIMED_PANEL_URL` (https only; `{id}` placeholder) and `BOOKING_NOTIFY_ON` (`received,confirmed,unknown`; `none` disables). Rule: the notification is optional and NEVER fail-closed (missing/invalid notify config disables it silently, never a 503) and NEVER logs PII, request ids, tokens, addresses or bodies; it runs via `waitUntil` and cannot change the patient response.
 - **Forms:** POST to `PUBLIC_FORM_POST_URL` (vendor TBD). No first-party server-side form handling.
 - **i18n routes:** locale-first `/{es|en|ca|fr}/…`, `trailingSlash: 'always'`.
 

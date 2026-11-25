@@ -305,14 +305,14 @@ test('createPeticion: POSTs the exact AD-5 payload to /cita_peticiones', async (
 		comments: 'Primera visita',
 		modality: 'presencial',
 	});
-	assert.deepEqual(r, { ok: true, status: 'received' });
+	assert.deepEqual(r, { ok: true, status: 'received', peticionId: 77 });
 });
 
 test('createPeticion: omits comments when absent; returns only the detected status', async () => {
 	const f = script([jsonRes({ id: 78, state: 'pendiente', assigned_time: '2026-12-02T09:30:00+01:00', patient_name: 'Ana' })]);
 	const r = await createPeticion({ ...VALID, comments: undefined }, CONFIG, makeDeps(f.fn).deps);
 	assert.equal('comments' in JSON.parse(String(f.calls[0].init.body)), false);
-	assert.deepEqual(r, { ok: true, status: 'confirmed' });
+	assert.deepEqual(r, { ok: true, status: 'confirmed', peticionId: 78 });
 });
 
 test('createPeticion: upstream failure is mapped (timeout after send => unknown) with no retry', async () => {
@@ -326,4 +326,33 @@ test('createPeticion: 404 => 409 slot_unavailable', async () => {
 	const f = script([jsonRes({ error: 'not found' }, 404)]);
 	const r = await createPeticion(VALID, CONFIG, makeDeps(f.fn).deps);
 	assert.deepEqual(r, { ok: false, error: { status: 409, code: 'slot_unavailable' } });
+});
+
+// ---------- createPeticion: internal peticionId (REQ-NOTIFY-6) ----------
+
+test('createPeticion: exposes internal peticionId from numeric id and numeric-string id, on received and confirmed', async () => {
+	const f1 = script([jsonRes({ id: 987, state: 'pendiente' })]);
+	assert.deepEqual(await createPeticion(VALID, CONFIG, makeDeps(f1.fn).deps), { ok: true, status: 'received', peticionId: 987 });
+	const f2 = script([jsonRes({ id: '987', state: 'aceptada', assigned_time: '2026-12-02T09:30:00+01:00' })]);
+	assert.deepEqual(await createPeticion(VALID, CONFIG, makeDeps(f2.fn).deps), { ok: true, status: 'confirmed', peticionId: 987 });
+});
+
+test('createPeticion: invalid or missing id => peticionId undefined', async () => {
+	const bodies: unknown[] = [
+		{ state: 'pendiente' },
+		{ id: 0, state: 'pendiente' },
+		{ id: -5, state: 'pendiente' },
+		{ id: '12a', state: 'pendiente' },
+		{ id: 1.5, state: 'pendiente' },
+		{ id: 2 ** 60, state: 'pendiente' },
+		{ id: '99999999999999999999', state: 'pendiente' },
+		{ id: null, state: 'pendiente' },
+		{ id: '', state: 'pendiente' },
+	];
+	for (const body of bodies) {
+		const f = script([jsonRes(body)]);
+		const r = await createPeticion(VALID, CONFIG, makeDeps(f.fn).deps);
+		assert.equal(r.ok, true, JSON.stringify(body));
+		assert.equal((r as { peticionId?: number }).peticionId, undefined, JSON.stringify(body));
+	}
 });
