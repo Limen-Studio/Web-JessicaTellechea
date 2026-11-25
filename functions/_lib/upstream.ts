@@ -206,9 +206,20 @@ export async function getAvailability(
 	return { ok: true, value };
 }
 
-export type PeticionResult = { ok: true; status: BookingStatus } | { ok: false; error: MappedError };
+export type PeticionResult = { ok: true; status: BookingStatus; peticionId?: number } | { ok: false; error: MappedError };
 
-/** Creates the booking request. Returns only the detected status: never the upstream id, PII or body. */
+/** Positive safe integer from a number or a digits-only string; anything else is `undefined`. */
+function parsePeticionId(body: unknown): number | undefined {
+	if (typeof body !== 'object' || body === null) return undefined;
+	const id = (body as Record<string, unknown>).id;
+	const n = typeof id === 'number' ? id : typeof id === 'string' && /^\d+$/.test(id) ? Number(id) : NaN;
+	return Number.isSafeInteger(n) && n > 0 ? n : undefined;
+}
+
+/**
+ * Creates the booking request. The id is internal (only used by the server-side notification link):
+ * it is never returned to the client nor logged. Never exposes PII or the upstream body.
+ */
 export async function createPeticion(
 	req: ValidatedBookingRequest,
 	config: BookingConfig,
@@ -231,5 +242,5 @@ export async function createPeticion(
 
 	const res = await nubimedFetch(config, 'request', 'POST', '/cita_peticiones', deps, { body: payload });
 	if (!res.ok) return res;
-	return { ok: true, status: detectBookingStatus(res.body) };
+	return { ok: true, status: detectBookingStatus(res.body), peticionId: parsePeticionId(res.body) };
 }

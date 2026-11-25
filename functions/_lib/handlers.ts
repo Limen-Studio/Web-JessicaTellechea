@@ -3,6 +3,7 @@ import { containsSlot } from '../../src/features/booking-nubimed/agenda-hours.ts
 import { readConfig } from './env.ts';
 import type { BookingEnv } from './env.ts';
 import { errorResponse, isSameOrigin, json, mappedErrorResponse } from './http.ts';
+import { scheduleBookingNotification } from './notify.ts';
 import { verifyTurnstile } from './turnstile.ts';
 import { createPeticion, getAvailability } from './upstream.ts';
 import type { UpstreamDeps } from './upstream.ts';
@@ -111,5 +112,11 @@ export async function handleRequest(request: Request, env: BookingEnv, deps: Ups
 
 	// 7. Create the request upstream (never retried)
 	const created = await createPeticion(req, config, deps);
-	return created.ok ? json(200, { ok: true, status: created.status }) : mappedErrorResponse(created.error);
+	// Optional email to the doctor: fire-and-forget (waitUntil), never alters the response below.
+	if (created.ok) {
+		scheduleBookingNotification(env, deps, { status: created.status, req, peticionId: created.peticionId });
+		return json(200, { ok: true, status: created.status });
+	}
+	if (created.error.code === 'unknown') scheduleBookingNotification(env, deps, { status: 'unknown', req });
+	return mappedErrorResponse(created.error);
 }

@@ -21,19 +21,28 @@ interface World {
 	agendas?: () => Response;
 	post?: () => Response | Error;
 	turnstile?: () => Response | Error;
+	email?: () => Response | Error;
 }
+
+type Kind = 'turnstile' | 'agendas' | 'post' | 'email' | 'other';
 
 const jsonRes = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
 	new Response(JSON.stringify(body), { status, headers });
 
 function setup(world: World = {}, cache: CacheLike | null = null) {
-	const calls: { kind: 'turnstile' | 'agendas' | 'post' | 'other'; url: string; init?: RequestInit }[] = [];
+	const calls: { kind: Kind; url: string; init?: RequestInit }[] = [];
 	const fn = (async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = String(input);
 		const path = new URL(url).pathname;
 		if (url.startsWith('https://challenges.cloudflare.com/')) {
 			calls.push({ kind: 'turnstile', url, init });
 			const r = world.turnstile ? world.turnstile() : jsonRes({ success: true, action: 'booking' });
+			if (r instanceof Error) throw r;
+			return r;
+		}
+		if (url.startsWith('https://api.cloudflare.com/')) {
+			calls.push({ kind: 'email', url, init });
+			const r = world.email ? world.email() : jsonRes({ success: true });
 			if (r instanceof Error) throw r;
 			return r;
 		}
@@ -60,8 +69,11 @@ function setup(world: World = {}, cache: CacheLike | null = null) {
 		},
 		now: () => new Date('2026-12-01T10:00:00+01:00'),
 	};
-	const count = (k: 'turnstile' | 'agendas' | 'post' | 'other') => calls.filter((c) => c.kind === k).length;
-	return { deps, calls, count, total: () => calls.length };
+	const count = (k: Kind) => calls.filter((c) => c.kind === k).length;
+	const flush = async () => {
+		await Promise.all(pending);
+	};
+	return { deps, calls, count, total: () => calls.length, pending, flush };
 }
 
 const ORIGIN = 'https://site.test';
@@ -456,5 +468,200 @@ test('REQ-BFF-11: no console output ever contains PII, token or comments (succes
 	const all = captured.join('\n');
 	for (const pii of ['Ana', 'Pérez', 'ana@example.test', '600111222', 'secreto', 'TS-TOKEN', 'SECRET-TOKEN', 'TS-SECRET', 'api@example.test']) {
 		assert.equal(all.includes(pii), false, pii);
+	}
+});
+
+// ===================== booking notification (REQ-NOTIFY-1/2/6/7) =====================
+
+const NOTIFY_ENV: BookingEnv = {
+	...ENV,
+	CF_ACCOUNT_ID: '0123456789abcdef0123456789abcdef',
+	CF_EMAIL_API_TOKEN: 'CF-SECRET-TOKEN',
+	BOOKING_NOTIFY_TO: 'doctora@example.test',
+	BOOKING_NOTIFY_FROM: 'reservas@example.test',
+};
+
+const emailBody = (w: ReturnType<typeof setup>) => {
+	const call = w.calls.find((c) => c.kind === 'email');
+	assert.ok(call, 'email call expected');
+	return JSON.parse(String(call.init?.body)) as { subject: string; text: string; html: string };
+};
+
+test('notify: received => one email scheduled via waitUntil with the pending subject; response unchanged', async () => {
+	const w = setup();
+	const r = await handleRequest(postReq(goodBody()), NOTIFY_ENV, w.deps);
+	assert.equal(r.status, 200);
+	assert.deepEqual(await r.json(), { ok: true, status: 'received' });
+	assert.equal(w.pending.length, 1);
+	await w.flush();
+	assert.equal(w.count('email'), 1);
+	assert.equal(emailBody(w).subject, 'Nueva solicitud de cita (pendiente): Tricología · El Vendrell');
+	assert.equal(emailBody(w).text.includes('secreto'), false, 'comments never in the email');
+	assert.equal(w.calls.at(-1)?.kind, 'email', 'email goes after the upstream POST');
+});
+
+test('notify: confirmed => confirmed subject', async () => {
+	const w = setup({ post: () => jsonRes({ id: 9911, state: 'aceptada', assigned_time: SLOT }) });
+	const r = await handleRequest(postReq(goodBody()), NOTIFY_ENV, w.deps);
+	assert.deepEqual(await r.json(), { ok: true, status: 'confirmed' });
+	await w.flush();
+	assert.equal(emailBody(w).subject, 'Cita confirmada automáticamente (sin acción): Tricología · El Vendrell');
+});
+
+test('notify: unknown (5xx and network after send) => email "posible solicitud"; client still gets 502 unknown', async () => {
+	for (const post of [() => jsonRes({}, 500), () => new TypeError('fetch failed')]) {
+		const w = setup({ post });
+		const r = await handleRequest(postReq(goodBody()), NOTIFY_ENV, w.deps);
+		assert.equal(r.status, 502);
+		assert.deepEqual(await r.json(), { ok: false, code: 'unknown' });
+		await w.flush();
+		assert.equal(w.count('email'), 1);
+		assert.equal(emailBody(w).subject, 'Posible solicitud de cita (verificar en Nubimed): Tricología · El Vendrell');
+	}
+});
+
+test('notify: BOOKING_NOTIFY_ON filters statuses; none disables', async () => {
+	const onlyReceived = { ...NOTIFY_ENV, BOOKING_NOTIFY_ON: 'received' };
+	const a = setup({ post: () => jsonRes({ id: 1, assigned_time: SLOT }) });
+	await handleRequest(postReq(goodBody()), onlyReceived, a.deps);
+	await a.flush();
+	assert.equal(a.count('email'), 0);
+	const b = setup({ post: () => jsonRes({}, 500) });
+	await handleRequest(postReq(goodBody()), onlyReceived, b.deps);
+	await b.flush();
+	assert.equal(b.count('email'), 0);
+	const c = setup();
+	await handleRequest(postReq(goodBody()), { ...NOTIFY_ENV, BOOKING_NOTIFY_ON: 'none' }, c.deps);
+	await c.flush();
+	assert.equal(c.count('email'), 0);
+	const d = setup();
+	await handleRequest(postReq(goodBody()), onlyReceived, d.deps);
+	await d.flush();
+	assert.equal(d.count('email'), 1);
+});
+
+test('notify: zero emails on every non-created outcome (honeypot, 400/413, 403, 409, 422, busy, config, upstream)', async () => {
+	const cases: { name: string; req: () => Request; world?: World; env?: BookingEnv }[] = [
+		{ name: 'honeypot', req: () => postReq({ ...goodBody(), website: 'spam' }) },
+		{ name: 'invalid fields', req: () => postReq({ ...goodBody(), patient: { ...goodBody().patient, phone: '12' } }) },
+		{ name: 'bad json', req: () => postReq(null, {}, '{nope') },
+		{ name: 'oversize', req: () => postReq(null, {}, 'x'.repeat(9000)) },
+		{ name: 'forbidden', req: () => postReq(goodBody(), { Origin: 'https://evil.test' }) },
+		{ name: 'turnstile_failed', req: () => postReq(goodBody()), world: { turnstile: () => jsonRes({ success: false }) } },
+		{ name: 'slot_unavailable (step 6)', req: () => postReq(goodBody()), world: { agendas: () => jsonRes([]) } },
+		{ name: 'availability upstream', req: () => postReq(goodBody()), world: { agendas: () => jsonRes({}, 500) } },
+		{ name: 'availability busy', req: () => postReq(goodBody()), world: { agendas: () => jsonRes({}, 429) } },
+		{ name: 'post 429 busy', req: () => postReq(goodBody()), world: { post: () => jsonRes({}, 429) } },
+		{ name: 'post 422 invalid', req: () => postReq(goodBody()), world: { post: () => jsonRes({ errors: { patient_email: ['x'] } }, 422) } },
+		{ name: 'post 400 invalid', req: () => postReq(goodBody()), world: { post: () => jsonRes({}, 400) } },
+		{ name: 'post 404 slot_unavailable', req: () => postReq(goodBody()), world: { post: () => jsonRes({}, 404) } },
+		{ name: 'post 401 config', req: () => postReq(goodBody()), world: { post: () => jsonRes({}, 401) } },
+		{ name: 'bff config missing', req: () => postReq(goodBody()), env: { ...NOTIFY_ENV, NUBIMED_API_TOKEN: undefined } },
+	];
+	for (const c of cases) {
+		const w = setup(c.world);
+		await handleRequest(c.req(), c.env ?? NOTIFY_ENV, w.deps);
+		await w.flush();
+		assert.equal(w.count('email'), 0, c.name);
+	}
+});
+
+test('notify: patient response is byte-identical with email ok, failing, token-invalid, network, disabled or malformed config', async () => {
+	const variants: { name: string; env: BookingEnv; world: World }[] = [
+		{ name: 'ok', env: NOTIFY_ENV, world: {} },
+		{ name: 'provider 500', env: NOTIFY_ENV, world: { email: () => jsonRes({ success: false }, 500) } },
+		{ name: 'provider 401 (invalid token)', env: NOTIFY_ENV, world: { email: () => jsonRes({ success: false }, 401) } },
+		{ name: 'network', env: NOTIFY_ENV, world: { email: () => new TypeError('boom') } },
+		{ name: 'disabled (no config)', env: ENV, world: {} },
+		{ name: 'disabled (none)', env: { ...NOTIFY_ENV, BOOKING_NOTIFY_ON: 'none' }, world: {} },
+		{ name: 'malformed notify config', env: { ...NOTIFY_ENV, CF_ACCOUNT_ID: 'nope' }, world: {} },
+	];
+	const spy = { warn: console.warn };
+	console.warn = () => {};
+	try {
+		for (const post of [undefined, () => jsonRes({ id: 9, assigned_time: SLOT }), () => jsonRes({}, 500)]) {
+			const snapshots: string[] = [];
+			for (const v of variants) {
+				const w = setup({ ...v.world, post });
+				const r = await handleRequest(postReq(goodBody()), v.env, w.deps);
+				await w.flush();
+				snapshots.push(`${r.status}|${[...r.headers.entries()].sort().join(',')}|${await r.text()}`);
+			}
+			assert.equal(new Set(snapshots).size, 1, snapshots.join(' || '));
+			assert.equal(snapshots[0].includes('"code":"config"'), false);
+		}
+	} finally {
+		console.warn = spy.warn;
+	}
+});
+
+test('notify: handler survives a waitUntil that throws; response unchanged', async () => {
+	const w = setup();
+	const deps = {
+		...w.deps,
+		waitUntil: () => {
+			throw new Error('waitUntil exploded');
+		},
+	};
+	const r = await handleRequest(postReq(goodBody()), NOTIFY_ENV, deps);
+	assert.equal(r.status, 200);
+	assert.deepEqual(await r.json(), { ok: true, status: 'received' });
+});
+
+test('notify: peticionId never reaches the response; it reaches the email link only when the template has {id}', async () => {
+	const w = setup({ post: () => jsonRes({ id: 987654, state: 'pendiente' }) });
+	const r = await handleRequest(postReq(goodBody()), { ...NOTIFY_ENV, NUBIMED_PANEL_URL: 'https://panel.example/p/{id}' }, w.deps);
+	const text = await r.text();
+	assert.equal(text.includes('987654'), false);
+	assert.equal(text.includes('"id"'), false);
+	await w.flush();
+	assert.ok(emailBody(w).text.includes('https://panel.example/p/987654'));
+	const d = setup({ post: () => jsonRes({ id: 987654, state: 'pendiente' }) });
+	await handleRequest(postReq(goodBody()), NOTIFY_ENV, d.deps);
+	await d.flush();
+	assert.equal(emailBody(d).text.includes('987654'), false);
+});
+
+test('REQ-NOTIFY-7: no console output contains PII, emails, request id or tokens, even when the provider fails', async () => {
+	const captured: string[] = [];
+	const names = ['log', 'info', 'warn', 'error', 'debug'] as const;
+	const originals = names.map((n) => console[n]);
+	for (const n of names) console[n] = (...a: unknown[]) => void captured.push(a.map(String).join(' '));
+	try {
+		const worlds: World[] = [
+			{ post: () => jsonRes({ id: 987654, state: 'pendiente' }), email: () => jsonRes({ success: false, errors: ['doctora@example.test'] }, 401) },
+			{ post: () => jsonRes({ id: 987654, assigned_time: SLOT }), email: () => new TypeError('fetch failed doctora@example.test') },
+			{ post: () => jsonRes({}, 500), email: () => jsonRes({}, 429) },
+		];
+		for (const world of worlds) {
+			const w = setup(world);
+			await handleRequest(postReq(goodBody()), NOTIFY_ENV, w.deps);
+			await w.flush();
+			assert.equal(w.count('email'), 1);
+		}
+	} finally {
+		names.forEach((n, i) => {
+			console[n] = originals[i];
+		});
+	}
+	assert.ok(captured.length >= 3, 'one generic warn line per failed send');
+	const all = captured.join(' | ');
+	for (const secret of [
+		'Ana',
+		'Pérez',
+		'ana@example.test',
+		'600111222',
+		'secreto',
+		'doctora@example.test',
+		'reservas@example.test',
+		'987654',
+		'CF-SECRET-TOKEN',
+		'SECRET-TOKEN',
+		'0123456789abcdef0123456789abcdef',
+		'TS-TOKEN',
+		'TS-SECRET',
+		'Tricología',
+	]) {
+		assert.equal(all.includes(secret), false, secret);
 	}
 });
